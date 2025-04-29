@@ -6,7 +6,7 @@
   >
     <!-- Form Container -->
     <div class="form-container">
-      <div class="form-main" :class="{ 'preview-mode': previewMode }">
+      <div class="form-main">
         <!-- Tabs -->
         <div class="form-tabs">
           <div class="form-tabs-header">
@@ -33,7 +33,6 @@
                     <i class="fas fa-grip-lines text-gray-400 mr-2 text-xs" />
                   </div>
                   <span v-if="editingTabIndex !== index">{{ tab.label }}</span>
-                
                 </div>
               </template>
             </draggable>
@@ -43,7 +42,7 @@
                 class="add-tab-button bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
                 @click="addTab"
               >
-               New tab
+                New tab
               </button>
             </div>
           </div>
@@ -205,7 +204,10 @@
             </draggable>
 
             <div class="add-section-container">
-              <button class="add-section-button" @click="addSection">
+              <button 
+                class="add-section-button" 
+                @click="addSection"
+              >
                 <i class="fas fa-plus text-xs mr-1" />
                 Add Section
               </button>
@@ -390,7 +392,16 @@
               >Published</label>
             </div>
           </div>
-
+          
+          <div class="mb-4 mt-4">
+            <button
+              class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+              @click="exportForm"
+            >
+              <i class="fas fa-file-export mr-2" />Export Form
+            </button>
+          </div>
+          
           <div class="field-picker mt-8">
             <h3 class="font-medium text-gray-700 mb-3">
               Add New Field
@@ -409,13 +420,11 @@
         </div>
       </div>
     </div>
-
-    <!-- Tab Properties are now in the sidebar -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, defineEmits, watch, onMounted } from "vue";
 import { v4 as uuidv4 } from "uuid";
 import draggable from "vuedraggable";
 import PropertiesPanel from "../components/ui/PropertiesPanel.vue";
@@ -423,7 +432,7 @@ import DraggableItem from "../components/ui/DraggableItem.vue";
 import FieldTypeSelector from "../components/ui/FieldTypeSelector.vue";
 import { Control, ControlType } from "../types";
 
-const container = ref<HTMLElement | null>(null);
+const emit = defineEmits(['form-data-change']);
 
 // Form configuration
 const formName = ref("New Form");
@@ -437,19 +446,17 @@ const tabs = ref<Array<{ label: string; sections: any[] }>>([
     label: "Tab 1",
     sections: [],
   },
-  
 ]);
+
 const activeTab = ref(0);
 const selectedTab = ref<number | null>(null);
 const selectedControl = ref<Control | null>(null);
 const selectedSection = ref<string | null>(null);
 const selectedColumn = ref<{sectionId: string; columnIndex: number} | null>(null);
 const selectedRow = ref<{sectionId: string; rowIndex: number} | null>(null);
-const previewMode = ref(false);
 
 // Tab editing state
 const editingTabIndex = ref<number | null>(null);
-const tabInputRef = ref<HTMLInputElement | null>(null);
 
 // Field selector state
 const showFieldSelector = ref(false);
@@ -457,8 +464,31 @@ const activeSection = ref<string | null>(null);
 const activeRowIndex = ref<number | null>(null);
 const activeColumn = ref<number | null>(null);
 
-// We don't need separate Tab properties panel state anymore
-// as we're using the selectedTab value directly
+// Emit form data changes whenever relevant data changes
+watch([formName, formDescription, formId, isPublished, tabs], () => {
+  emitFormDataChange();
+}, { deep: true });
+
+// Function to emit the current form structure to parent component
+function emitFormDataChange() {
+  const formStructure = {
+    metadata: {
+      formName: formName.value,
+      formDescription: formDescription.value,
+      formId: formId.value,
+      isPublished: isPublished.value,
+      dateCreated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    },
+    tabs: tabs.value
+  };
+  
+  // Save to localStorage for compatibility
+  localStorage.setItem('savedFormStructure', JSON.stringify(formStructure));
+  
+  // Emit to parent
+  emit('form-data-change', formStructure);
+}
 
 function openTabProperties(index: number) {
   // Select the tab for editing in the sidebar
@@ -510,16 +540,6 @@ function addTab() {
   tabs.value.push(newTab);
   // Set the active tab to the newly created tab
   activeTab.value = tabs.value.length - 1;
-}
-
-// Remove a tab
-function removeTab(index: number) {
-  if (tabs.value.length > 1) {
-    tabs.value.splice(index, 1);
-    if (activeTab.value >= tabs.value.length) {
-      activeTab.value = tabs.value.length - 1;
-    }
-  }
 }
 
 // Duplicate a tab
@@ -680,15 +700,6 @@ function getSectionById(id: string) {
   return currentTabSections.value.find((section) => section.id === id) || {};
 }
 
-// Add a column to a section
-function addColumnToSection(section: any) {
-  if (section.columns.length < 3) {
-    section.columns.push({
-      fields: [],
-    });
-  }
-}
-
 // Delete a column from a section
 function deleteColumn(sectionId: string, columnIndex: number) {
   const section = getSectionById(sectionId);
@@ -762,14 +773,14 @@ function addControl(type: ControlType) {
   };
   // Try to add to the first column of the first section if exists
   const sections = currentTabSections.value;
-  if (sections.length > 0) {
-    sections[0].columns[0].fields.push(newControl);
+  if (sections.length > 0 && sections[0].rows && sections[0].rows[0].columns.length > 0) {
+    sections[0].rows[0].columns[0].fields.push(newControl);
   } else {
     // Create a section if none exists
     addSection();
     // After adding a section, get the sections again
-    if (tabs.value[activeTab.value]?.sections[0]) {
-      tabs.value[activeTab.value].sections[0].columns[0].fields.push(
+    if (tabs.value[activeTab.value]?.sections[0]?.rows[0]?.columns[0]) {
+      tabs.value[activeTab.value].sections[0].rows[0].columns[0].fields.push(
         newControl
       );
     }
@@ -825,13 +836,27 @@ function updateControlProps(updatedControl: Control) {
   // Find and update the control in our data structure
   const sections = currentTabSections.value;
   for (const section of sections) {
-    for (const column of section.columns) {
-      const index = column.fields.findIndex(
-        (field: any) => field.id === updatedControl.id
-      );
-      if (index !== -1) {
-        column.fields[index] = { ...updatedControl };
-        return;
+    if (section.rows) {
+      for (const row of section.rows) {
+        for (const column of row.columns) {
+          const index = column.fields.findIndex(
+            (field: any) => field.id === updatedControl.id
+          );
+          if (index !== -1) {
+            column.fields[index] = { ...updatedControl };
+            return;
+          }
+        }
+      }
+    } else if (section.columns) {
+      for (const column of section.columns) {
+        const index = column.fields.findIndex(
+          (field: any) => field.id === updatedControl.id
+        );
+        if (index !== -1) {
+          column.fields[index] = { ...updatedControl };
+          return;
+        }
       }
     }
   }
@@ -840,16 +865,6 @@ function updateControlProps(updatedControl: Control) {
 function openSectionMenu(section: any) {
   // Implement section menu functionality here; for now, just show an alert
   alert(`Open menu for section: ${section.title || "Untitled Section"}`);
-}
-
-// Tab editing functions
-function stopEditingTab() {
-  // Trim whitespace and ensure tab has a label
-  if (editingTabIndex.value !== null) {
-    const tab = tabs.value[editingTabIndex.value];
-    tab.label = tab.label.trim() || `Tab ${editingTabIndex.value + 1}`;
-  }
-  editingTabIndex.value = null;
 }
 
 // Handle tab reordering
@@ -885,6 +900,68 @@ function addColumnToRow(section: any, rowIndex: number) {
     });
   }
 }
+
+// Export form structure as JSON
+function exportForm() {
+  // Create form structure object with metadata and form content
+  const formStructure = {
+    metadata: {
+      formName: formName.value,
+      formDescription: formDescription.value,
+      formId: formId.value,
+      isPublished: isPublished.value,
+      dateCreated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    },
+    tabs: tabs.value
+  };
+  
+  // Convert to JSON string
+  const jsonContent = JSON.stringify(formStructure, null, 2);
+  
+  // Save to localStorage for preview functionality
+  localStorage.setItem('savedFormStructure', jsonContent);
+  
+  // Create a blob and download link
+  const blob = new Blob([jsonContent], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  // Create a temporary link element and trigger download
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `${formName.value || 'form'}-${formId.value}.json`;
+  document.body.appendChild(link);
+  link.click();
+  
+  // Clean up
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+// Replace the IIFE with a named function that can be called on mount
+function loadSavedForm() {
+  const savedForm = localStorage.getItem('savedFormStructure');
+  if (savedForm) {
+    try {
+      const parsedForm = JSON.parse(savedForm);
+      // Only update if there's valid data
+      if (parsedForm.metadata && parsedForm.tabs && parsedForm.tabs.length) {
+        formName.value = parsedForm.metadata.formName || formName.value;
+        formDescription.value = parsedForm.metadata.formDescription || formDescription.value;
+        formId.value = parsedForm.metadata.formId || formId.value;
+        isPublished.value = parsedForm.metadata.isPublished || isPublished.value;
+        tabs.value = parsedForm.tabs;
+      }
+    } catch (error) {
+      // Silent fail, keep default form
+    }
+  }
+}
+
+// Ensure the form data loads properly on component mount
+onMounted(() => {
+  loadSavedForm();
+});
 </script>
 
 <style>

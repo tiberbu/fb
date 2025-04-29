@@ -186,8 +186,6 @@ function selectSection() {
 
 function moveSectionsToTab() {
   let newTab = moveChildrenToParent(props, "tab", "section", store.form.layout);
-
-const emit = defineEmits(["update:section", "update:tab"]);
   store.form.activeTab = newTab.df.name;
 }
 

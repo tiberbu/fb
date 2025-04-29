@@ -10,7 +10,7 @@
         class="form-main"
         :class="[store.preview ? 'preview' : '']"
       >
-        <!-- <Tabs /> -->
+        <Tabs />
       </div>
     </div>
     <div 

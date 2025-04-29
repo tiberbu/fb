@@ -1,13 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import FormBuilder from '../views/FormBuilder.vue'
+import FormContainer from '../views/FormContainer.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
+      name: 'FormContainer',
+      component: FormContainer
+    },
+    {
+      path: '/builder',
       name: 'FormBuilder',
-      component: FormBuilder
+      component: () => import('../views/FormBuilder.vue')
     },
     {
       path: '/preview',
