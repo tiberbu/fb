@@ -1,6 +1,7 @@
 <template>
   <div class="form-tabs-container">
     <div class="form-tabs">
+      
       <draggable
         v-model="store.form.layout.tabs"
         group="tabs"
@@ -25,6 +26,7 @@
             :hidden="store.readOnly && tab.hidden"
             @click.stop="activateTab(tab)"
             @mouseover.stop="dragOver(tab)"
+            @dblclick.stop="startEditingTab(tab)"
           >
             <EditableInput
               v-model="tab.df.label"
@@ -49,13 +51,10 @@
         class="add-tab-btn"
         @click.stop="addNewTab"
       >
-        <i class="fa fa-plus" />
+       Add
       </button>
     </div>
-    <div
-      v-if="store.currentTab"
-      class="tab-content"
-    >
+    <div v-if="store.currentTab" class="tab-content">
       <draggable
         v-model="store.currentTab.sections"
         group="sections"
@@ -74,13 +73,9 @@
           />
         </template>
       </draggable>
-      <div
-        v-if="!store.readOnly"
-        class="add-section"
-        @click.stop="addNewSection"
-      >
+      <div class="add-section" @click.stop="addNewSection" v-if="!store.readOnly">
         <div class="add-section-button">
-          <i class="fa fa-plus" />
+          <i class="fa fa-plus"></i>
           <span>Add Section</span>
         </div>
       </div>
@@ -89,17 +84,13 @@
 </template>
 
 <script setup lang="ts">
-// Shims for .vue imports
-// import type { DefineComponent } from 'vue';
 import draggable from "vuedraggable";
 import Section from "./Section.vue";
 import EditableInput from "./EditableInput.vue";
-
 import { useFormBuilderStore } from "../stores/form-builder-store";
 import { sectionBoilerplate, confirmDialog, isTouchScreenDevice } from "../utils/form-builder-utils";
 import { ref, computed } from "vue";
 import { useMagicKeys, whenever } from "@vueuse/core";
-import type { Tab } from '../types/form-builder';
 
 const store = useFormBuilderStore();
 
@@ -107,7 +98,7 @@ const store = useFormBuilderStore();
 const { Backspace } = useMagicKeys();
 whenever(Backspace, (value) => {
   if (value && selected.value && store.notUsingInput) {
-    removeTab(store.currentTab as Tab, undefined, true);
+    removeTab(store.currentTab, "", true);
   }
 });
 
@@ -115,16 +106,34 @@ const dragged = ref(false);
 const selected = computed(() => store.selected(store.currentTab?.df.name || ''));
 const hasTabs = computed(() => (store.form.layout.tabs?.length ?? 0) > 1);
 
-function activateTab(tab: Tab) {
+function activateTab(tab) {
   store.activateTab(tab);
 }
 
-function dragOver(tab: Tab) {
-  if (!dragged.value) {
+// This function is called when a tab is double-clicked
+function startEditingTab(tab) {
+  // Find the EditableInput component inside the tab and simulate a double-click
+  // to activate its built-in editing capabilities
+  const tabElement = document.querySelector(`.tab-drag-handle.${store.form.activeTab === tab.df.name ? 'active' : ''}`);
+  if (tabElement) {
+    const editableInput = tabElement.querySelector('.editable-input');
+    if (editableInput) {
+      // Create and dispatch a double-click event to trigger EditableInput's edit mode
+      const event = new MouseEvent('dblclick', {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      });
+      editableInput.dispatchEvent(event);
+    }
+  }
+}
+
+function dragOver(tab) {
+  !dragged.value &&
     setTimeout(() => {
       store.form.activeTab = tab.df.name;
     }, 500);
-  }
 }
 
 function addNewTab() {
@@ -132,24 +141,23 @@ function addNewTab() {
 }
 
 function addNewSection() {
-  if (!store.currentTab) return;
   let section = sectionBoilerplate();
   store.currentTab.sections.push(section);
   store.form.selectedField = section.df;
 }
 
-function isTabEmpty(tab: Tab) {
+function isTabEmpty(tab) {
   // check if sections have columns and they contain fields
-  return !tab.sections.some((section: any) =>
-    section.columns.some((column: any) => column.fields.length > 0)
+  return !tab.sections.some((section) => 
+    section.columns.some((column) => column.fields.length > 0)
   );
 }
 
-function removeTab(tab: Tab, event?: Event, force = false) {
+function removeTab(tab, event, force = false) {
   // if remove_tab_btn is not visible then return
-  if (event && !(event as any)?.currentTarget?.offsetParent && !force) return;
+  if (!event?.currentTarget?.offsetParent && !force) return;
 
-  if (store.isCustomizeForm && store.currentTab?.df.isCustomField == 0) {
+  if (store.isCustomizeForm && store.currentTab.df.isCustomField == 0) {
     alert("Cannot delete standard field. You can hide it if you want");
     throw "cannot delete standard field";
   } else if (store.hasStandardField(store.currentTab)) {
@@ -162,15 +170,13 @@ function removeTab(tab: Tab, event?: Event, force = false) {
       "Are you sure you want to delete the tab? All the sections along with fields in the tab will be moved to the previous tab.",
       () => deleteTab(tab),
       "Delete tab",
-      undefined,
-      undefined,
       () => deleteTab(tab, true),
       "Delete entire tab with fields"
     );
   }
 }
 
-function deleteTab(tab: Tab, withChildren = false) {
+function deleteTab(tab, withChildren = false) {
   let tabs = store.form.layout.tabs;
   let index = tabs.indexOf(tab);
 
@@ -228,9 +234,16 @@ function deleteTab(tab: Tab, withChildren = false) {
       position: relative;
       user-select: none;
       margin: 0 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       
       .editable-input {
         position: relative;
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+        font-weight: 500;
         
         &:after {
           content: '';

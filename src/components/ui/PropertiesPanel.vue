@@ -1,7 +1,7 @@
 <template>
   <div class="properties-panel p-4">
     <h3 class="text-lg font-medium text-gray-800 mb-4">
-      {{ isSection ? 'Section Properties' : 'Field Properties' }}
+      {{ isSection ? 'Section Properties 1' : 'Field Properties' }}
     </h3>
     
     <!-- Section Properties -->

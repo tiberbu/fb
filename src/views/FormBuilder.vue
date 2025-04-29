@@ -1,15 +1,12 @@
 <template>
-  <div 
+  <div
     ref="container"
     class="form-builder-container"
     @click="selectedControl = null"
   >
     <!-- Form Container -->
     <div class="form-container">
-      <div 
-        class="form-main" 
-        :class="{ 'preview-mode': previewMode }"
-      >
+      <div class="form-main" :class="{ 'preview-mode': previewMode }">
         <!-- Tabs -->
         <div class="form-tabs">
           <div class="form-tabs-header">
@@ -27,69 +24,40 @@
                   :class="[
                     'tab',
                     activeTab === index ? 'active' : '',
-                    editingTabIndex === index ? 'editing' : ''
+                    editingTabIndex === index ? 'editing' : '',
                   ]"
                   @click="activeTab = index"
+                  @dblclick.stop="openTabProperties(index)"
                 >
                   <div class="tab-drag-handle">
-                    <i class="fas fa-grip-lines text-gray-400 mr-2 text-xs"></i>
+                    <i class="fas fa-grip-lines text-gray-400 mr-2 text-xs" />
                   </div>
-                  <span v-if="editingTabIndex !== index" @dblclick.stop="startEditingTab(index)">{{ tab.label }}</span>
-                  <input 
-                    v-else
-                    type="text" 
-                    v-model="tab.label" 
-                    @blur="stopEditingTab"
-                    @keyup.enter="stopEditingTab"
-                    ref="tabInputRef"
-                    class="tab-edit-input"
-                    @click.stop
-                  />
-                  <div class="tab-actions">
-                    <button
-                      v-if="tabs.length > 1"
-                      class="tab-close"
-                      @click.stop="removeTab(index)"
-                      title="Remove tab"
-                    >
-                      <i class="fas fa-times text-xs" />
-                    </button>
-                    <button
-                      class="tab-edit"
-                      @click.stop="startEditingTab(index)"
-                      title="Rename tab"
-                    >
-                      <i class="fas fa-pencil-alt text-xs" />
-                    </button>
-                    <button
-                      class="tab-duplicate"
-                      @click.stop="duplicateTab(index)"
-                      title="Duplicate tab"
-                    >
-                      <i class="fas fa-clone text-xs" />
-                    </button>
-                  </div>
+                  <span v-if="editingTabIndex !== index">{{ tab.label }}</span>
+                
                 </div>
               </template>
             </draggable>
             <div class="tab-actions-right">
               <button
-                class="add-tab-button"
-                @click="addTab"
                 title="Add new tab"
+                class="add-tab-button bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+                @click="addTab"
               >
-                <i class="fas fa-plus text-xs" />
+               New tab
               </button>
             </div>
           </div>
 
           <div class="tab-content">
-            <div v-if="currentTabSections.length === 0" class="empty-form">
+            <div
+              v-if="currentTabSections.length === 0"
+              class="empty-form"
+            >
               <div class="text-gray-400 text-center py-10">
                 Click the button below to add a section
               </div>
               <div class="flex justify-center">
-                <button 
+                <button
                   class="add-section-button"
                   @click="addSection"
                 >
@@ -108,16 +76,22 @@
               class="sections-container"
             >
               <template #item="{ element: section }">
-                <div 
+                <div
                   :class="[
-                    'section', 
-                    selectedSection === section.id ? 'selected' : ''
+                    'section',
+                    selectedSection === section.id ? 'selected' : '',
                   ]"
                 >
-                  <div class="section-header section-drag-handle" @click="selectSection(section)">
+                  <div
+                    class="section-header section-drag-handle"
+                    @click="selectSection(section)"
+                  >
                     <div class="section-title">
-                      <span>{{ section.title || 'Untitled Section' }}</span>
-                      <i v-if="section.collapsible" class="fas fa-chevron-down ml-2" />
+                      <span>{{ section.title || "Untitled Section" }}</span>
+                      <i
+                        v-if="section.collapsible"
+                        class="fas fa-chevron-down ml-2"
+                      />
                     </div>
                     <div class="section-actions">
                       <button @click.stop="openSectionMenu(section)">
@@ -137,7 +111,7 @@
                       class="column"
                     >
                       <template #item="{ element: field }">
-                        <DraggableItem 
+                        <DraggableItem
                           :control="field"
                           :selected="selectedControl?.id === field.id"
                           @edit="editControl"
@@ -146,28 +120,35 @@
                       </template>
                       <template #footer>
                         <div class="add-field-container relative">
-                          <button 
-                            class="add-field-button" 
+                          <button
+                            class="add-field-button"
                             @click="openFieldSelector(section, colIndex)"
                           >
                             <i class="fas fa-plus text-xs mr-1" />
                             Add Field
                           </button>
-                          
-                          <div 
-                            v-if="showFieldSelector && activeSection === section.id && activeColumn === colIndex"
+
+                          <div
+                            v-if="
+                              showFieldSelector &&
+                              activeSection === section.id &&
+                              activeColumn === colIndex
+                            "
                             class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
                           >
-                            <FieldTypeSelector 
-                              @select-field-type="(type) => addFieldToColumn(section, colIndex, type)" 
-                              @close="closeFieldSelector" 
+                            <FieldTypeSelector
+                              @select-field-type="
+                                (type) =>
+                                  addFieldToColumn(section, colIndex, type)
+                              "
+                              @close="closeFieldSelector"
                             />
                           </div>
                         </div>
                       </template>
                     </draggable>
-                    
-                    <button 
+
+                    <button
                       v-if="section.columns.length < 3"
                       class="add-column-button"
                       @click="addColumnToSection(section)"
@@ -179,12 +160,9 @@
                 </div>
               </template>
             </draggable>
-            
+
             <div class="add-section-container">
-              <button 
-                class="add-section-button"
-                @click="addSection"
-              >
+              <button class="add-section-button" @click="addSection">
                 <i class="fas fa-plus text-xs mr-1" />
                 Add Section
               </button>
@@ -193,38 +171,91 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Form Controls/Sidebar -->
-    <div class="form-controls" @click.stop>
+    <div
+      class="form-controls"
+      @click.stop
+    >
       <div class="form-sidebar">
-        <PropertiesPanel 
+        <PropertiesPanel
           v-if="selectedControl"
           :control="selectedControl"
           @update="updateControlProps"
         />
-        <div v-else-if="selectedSection" class="section-properties">
-          <h3 class="font-medium text-gray-700 mb-3">Section Properties</h3>
+        <div
+          v-else-if="selectedTab !== null"
+          class="tab-properties"
+        >
+          <h3 class="font-medium text-gray-700 mb-3">
+            Tab Properties
+          </h3>
+          <div class="mb-4">
+            <label class="block text-sm text-gray-600 mb-1">Tab Name</label>
+            <input
+              v-model="tabs[selectedTab].label"
+              type="text"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            >
+          </div>
+          <div class="mb-4 flex gap-2">
+            <button
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm"
+              @click="duplicateTab(selectedTab)"
+            >
+              <i class="fas fa-clone mr-2" />Duplicate Tab
+            </button>
+            <button
+              v-if="tabs.length > 1"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              @click="deleteTab(selectedTab)"
+            >
+              <i class="fas fa-trash-alt mr-2" />Delete Tab
+            </button>
+          </div>
+        </div>
+        <div
+          v-else-if="selectedSection"
+          class="section-properties"
+        >
+          <h3 class="font-medium text-gray-700 mb-3">
+            Section Properties
+          </h3>
           <div class="mb-4">
             <label class="block text-sm text-gray-600 mb-1">Title</label>
-            <input 
-              type="text" 
-              v-model="getSectionById(selectedSection).title" 
+            <input
+              v-model="getSectionById(selectedSection).title"
+              type="text"
               class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-            />
+            >
           </div>
           <div class="mb-4">
             <div class="flex items-center">
-              <input 
-                type="checkbox" 
-                id="collapsible" 
-                v-model="getSectionById(selectedSection).collapsible" 
+              <input
+                id="collapsible"
+                v-model="getSectionById(selectedSection).collapsible"
+                type="checkbox"
                 class="mr-2"
-              />
-              <label for="collapsible" class="text-sm text-gray-600">Collapsible</label>
+              >
+              <label
+                for="collapsible"
+                class="text-sm text-gray-600"
+              >Collapsible</label>
             </div>
           </div>
+          <div class="mb-4">
+            <button
+              class="delete-section-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              @click="deleteSection(selectedSection)"
+            >
+              <i class="fas fa-trash-alt mr-2" />Delete Section
+            </button>
+          </div>
         </div>
-        <div v-else class="empty-sidebar">
+        <div
+          v-else
+          class="empty-sidebar"
+        >
           <div class="empty-state">
             <div class="icon-container mb-3">
               <i class="fas fa-mouse-pointer text-gray-400" />
@@ -233,15 +264,17 @@
               Select a field or section to edit its properties
             </p>
           </div>
-          
+
           <div class="field-picker mt-8">
-            <h3 class="font-medium text-gray-700 mb-3">Add New Field</h3>
+            <h3 class="font-medium text-gray-700 mb-3">
+              Add New Field
+            </h3>
             <div class="grid grid-cols-2 gap-2">
               <button
                 v-for="fieldType in fieldTypes"
                 :key="fieldType.type"
                 class="field-type-button"
-                @click="addControl(fieldType.type)"
+                @click="addControl(fieldType.type as ControlType)"
               >
                 {{ fieldType.label }}
               </button>
@@ -250,36 +283,35 @@
         </div>
       </div>
     </div>
+
+    <!-- Tab Properties are now in the sidebar -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { v4 as uuidv4 } from 'uuid';
-import draggable from 'vuedraggable';
-import { useFormStore } from '../stores/form';
-import PropertiesPanel from '../components/ui/PropertiesPanel.vue';
-import DraggableItem from '../components/ui/DraggableItem.vue';
-import FieldTypeSelector from '../components/ui/FieldTypeSelector.vue';
-import { Control, ControlType } from '../types';
+import { ref, computed } from "vue";
+import { v4 as uuidv4 } from "uuid";
+import draggable from "vuedraggable";
+import PropertiesPanel from "../components/ui/PropertiesPanel.vue";
+import DraggableItem from "../components/ui/DraggableItem.vue";
+import FieldTypeSelector from "../components/ui/FieldTypeSelector.vue";
+import { Control, ControlType } from "../types";
 
-const router = useRouter();
-const formStore = useFormStore();
 const container = ref<HTMLElement | null>(null);
 
 // Form state
 const tabs = ref<Array<{ label: string; sections: any[] }>>([
   {
-    label: 'Details',
-    sections: []
+    label: "Details",
+    sections: [],
   },
   {
-    label: 'More Info',
-    sections: []
-  }
+    label: "More Info",
+    sections: [],
+  },
 ]);
 const activeTab = ref(0);
+const selectedTab = ref<number | null>(null);
 const selectedControl = ref<Control | null>(null);
 const selectedSection = ref<string | null>(null);
 const previewMode = ref(false);
@@ -293,6 +325,21 @@ const showFieldSelector = ref(false);
 const activeSection = ref<string | null>(null);
 const activeColumn = ref<number | null>(null);
 
+// We don't need separate Tab properties panel state anymore
+// as we're using the selectedTab value directly
+
+function openTabProperties(index: number) {
+  // Select the tab for editing in the sidebar
+  selectedTab.value = index;
+  // Clear other selections
+  selectedControl.value = null;
+  selectedSection.value = null;
+}
+
+function closeTabProperties() {
+  selectedTab.value = null;
+}
+
 // Computed property for current tab sections (with getter and setter)
 const currentTabSections = computed({
   get() {
@@ -302,41 +349,33 @@ const currentTabSections = computed({
     if (tabs.value[activeTab.value]) {
       tabs.value[activeTab.value].sections = newSections;
     }
-  }
+  },
 });
 
 // Field types
 const fieldTypes = [
-  { type: 'text', label: 'Text' },
-  { type: 'textarea', label: 'Text Area' },
-  { type: 'select', label: 'Select' },
-  { type: 'check', label: 'Checkbox' },
-  { type: 'date', label: 'Date' },
-  { type: 'file', label: 'File' },
-  { type: 'number', label: 'Number' },
-  { type: 'link', label: 'Link' }
+  { type: "text", label: "Text" },
+  { type: "textarea", label: "Text Area" },
+  { type: "select", label: "Select" },
+  { type: "check", label: "Checkbox" },
+  { type: "date", label: "Date" },
+  { type: "file", label: "File" },
+  { type: "number", label: "Number" },
+  { type: "link", label: "Link" },
 ];
-
-// Get current tab's sections
-function getCurrentTabSections() {
-  return tabs.value[activeTab.value]?.sections || [];
-}
 
 // Add a new tab
 function addTab() {
   // Generate a unique name for the tab
   const tabNumber = tabs.value.length + 1;
   const tabName = `Tab ${tabNumber}`;
-  
   // Create a new tab with proper structure
   const newTab = {
     label: tabName,
-    sections: []
+    sections: [],
   };
-  
   // Add the new tab to the tabs array
   tabs.value.push(newTab);
-  
   // Set the active tab to the newly created tab
   activeTab.value = tabs.value.length - 1;
 }
@@ -356,16 +395,12 @@ function duplicateTab(index: number) {
   // Create a deep copy of the tab to duplicate
   const sourceTab = tabs.value[index];
   const duplicatedTab = JSON.parse(JSON.stringify(sourceTab));
-  
   // Modify the copied tab's name
   duplicatedTab.label = `${sourceTab.label} (Copy)`;
-  
   // Generate new unique IDs for all sections and fields in the duplicated tab
   regenerateIds(duplicatedTab);
-  
   // Add the duplicated tab after the source tab
   tabs.value.splice(index + 1, 0, duplicatedTab);
-  
   // Switch to the duplicated tab
   activeTab.value = index + 1;
 }
@@ -373,11 +408,9 @@ function duplicateTab(index: number) {
 // Regenerate IDs for duplicated tab contents
 function regenerateIds(tab: any) {
   if (!tab.sections) return;
-  
   tab.sections.forEach((section: any) => {
     // Assign new ID to section
     section.id = uuidv4();
-    
     // Process columns and their fields
     if (section.columns) {
       section.columns.forEach((column: any) => {
@@ -402,13 +435,24 @@ function addSection() {
     collapsible: false,
     columns: [
       {
-        fields: []
-      }
-    ]
+        fields: [],
+      },
+    ],
   };
-  
   if (tabs.value[activeTab.value]) {
     tabs.value[activeTab.value].sections.push(newSection);
+  }
+}
+
+// Delete a section by id
+function deleteSection(sectionId: string) {
+  const sections = currentTabSections.value;
+  const index = sections.findIndex((section: any) => section.id === sectionId);
+  if (index !== -1) {
+    sections.splice(index, 1);
+    if (selectedSection.value === sectionId) {
+      selectedSection.value = null;
+    }
   }
 }
 
@@ -420,22 +464,16 @@ function selectSection(section: any) {
 
 // Get section by id
 function getSectionById(id: string) {
-  return currentTabSections.value.find(section => section.id === id) || {};
+  return currentTabSections.value.find((section) => section.id === id) || {};
 }
 
 // Add a column to a section
 function addColumnToSection(section: any) {
   if (section.columns.length < 3) {
     section.columns.push({
-      fields: []
+      fields: [],
     });
   }
-}
-
-// Open section menu
-function openSectionMenu(section: any) {
-  // Implement section menu logic
-  // console.log('Opening menu for section:', section.id);
 }
 
 // Field selector functions
@@ -452,18 +490,22 @@ function closeFieldSelector() {
 }
 
 // Add a field to a column
-function addFieldToColumn(section: any, columnIndex: number, type: ControlType = 'text') {
+function addFieldToColumn(
+  section: any,
+  columnIndex: number,
+  type: ControlType = "text"
+) {
   const newControl: Control = {
     id: uuidv4(),
     type,
     label: `New ${type}`,
     name: `field_${Date.now()}`,
     required: false,
-    placeholder: '',
-    options: type === 'select' ? [{ label: 'Option 1', value: 'option_1' }] : [],
-    order: 0
+    placeholder: "",
+    options:
+      type === "select" ? [{ label: "Option 1", value: "option_1" }] : [],
+    order: 0,
   };
-  
   section.columns[columnIndex].fields.push(newControl);
   selectedControl.value = newControl;
   closeFieldSelector();
@@ -477,11 +519,11 @@ function addControl(type: ControlType) {
     label: `New ${type}`,
     name: `field_${Date.now()}`,
     required: false,
-    placeholder: '',
-    options: type === 'select' ? [{ label: 'Option 1', value: 'option_1' }] : [],
-    order: 0
+    placeholder: "",
+    options:
+      type === "select" ? [{ label: "Option 1", value: "option_1" }] : [],
+    order: 0,
   };
-  
   // Try to add to the first column of the first section if exists
   const sections = currentTabSections.value;
   if (sections.length > 0) {
@@ -491,10 +533,11 @@ function addControl(type: ControlType) {
     addSection();
     // After adding a section, get the sections again
     if (tabs.value[activeTab.value]?.sections[0]) {
-      tabs.value[activeTab.value].sections[0].columns[0].fields.push(newControl);
+      tabs.value[activeTab.value].sections[0].columns[0].fields.push(
+        newControl
+      );
     }
   }
-  
   selectedControl.value = newControl;
 }
 
@@ -528,7 +571,9 @@ function updateControlProps(updatedControl: Control) {
   const sections = currentTabSections.value;
   for (const section of sections) {
     for (const column of section.columns) {
-      const index = column.fields.findIndex((field: any) => field.id === updatedControl.id);
+      const index = column.fields.findIndex(
+        (field: any) => field.id === updatedControl.id
+      );
       if (index !== -1) {
         column.fields[index] = { ...updatedControl };
         return;
@@ -537,23 +582,12 @@ function updateControlProps(updatedControl: Control) {
   }
 }
 
-// Preview the form
-function previewForm() {
-  previewMode.value = !previewMode.value;
+function openSectionMenu(section: any) {
+  // Implement section menu functionality here; for now, just show an alert
+  alert(`Open menu for section: ${section.title || "Untitled Section"}`);
 }
 
 // Tab editing functions
-function startEditingTab(index: number) {
-  editingTabIndex.value = index;
-  // Focus the input after the next DOM update
-  setTimeout(() => {
-    if (tabInputRef.value) {
-      tabInputRef.value.focus();
-      tabInputRef.value.select();
-    }
-  }, 10);
-}
-
 function stopEditingTab() {
   // Trim whitespace and ensure tab has a label
   if (editingTabIndex.value !== null) {
@@ -566,7 +600,9 @@ function stopEditingTab() {
 // Handle tab reordering
 function handleTabOrderChanged() {
   // If active tab content moved, update the activeTab index to follow it
-  const newActiveTabIndex = tabs.value.findIndex((_, i) => i === activeTab.value);
+  const newActiveTabIndex = tabs.value.findIndex(
+    (_, i) => i === activeTab.value
+  );
   if (newActiveTabIndex !== -1) {
     activeTab.value = newActiveTabIndex;
   } else {
@@ -574,9 +610,20 @@ function handleTabOrderChanged() {
     activeTab.value = 0;
   }
 }
+
+// Delete a tab function for the Tab Properties sidebar
+function deleteTab(index: number) {
+  if (tabs.value.length > 1) {
+    tabs.value.splice(index, 1);
+    closeTabProperties();
+    if (activeTab.value >= tabs.value.length) {
+      activeTab.value = tabs.value.length - 1;
+    }
+  }
+}
 </script>
 
 <style>
 /* Import the Frappe Form Builder CSS */
-@import '../assets/frappe-form-builder.css';
+@import "../assets/frappe-form-builder.css";
 </style>

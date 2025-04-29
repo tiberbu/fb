@@ -116,7 +116,12 @@ const column = computed(() => props.section.columns[props.section.columns.length
 // section
 function addSectionBelow() {
   let index = props.tab.sections.indexOf(props.section);
-  props.tab.sections.splice(index + 1, 0, sectionBoilerplate());
+  const newSections = [
+    ...props.tab.sections.slice(0, index + 1),
+    sectionBoilerplate(),
+    ...props.tab.sections.slice(index + 1)
+  ];
+  emit("update:tab", { ...props.tab, sections: newSections });
 }
 
 function isSectionEmpty() {
@@ -182,16 +187,20 @@ function selectSection() {
 function moveSectionsToTab() {
   let newTab = moveChildrenToParent(props, "tab", "section", store.form.layout);
 
-  // activate tab
+const emit = defineEmits(["update:section", "update:tab"]);
   store.form.activeTab = newTab.df.name;
 }
 
 // column
+// Removed redundant definition of emit; the emit from earlier is used.
+
 function addColumn() {
-  props.section.columns.push({
+  const newColumn = {
     fields: [],
     df: store.getDf("Column Break"),
-  });
+  };
+  const updatedSection = { ...props.section, columns: [...props.section.columns, newColumn] };
+  emit("update:section", updatedSection);
 }
 
 function removeColumn() {
