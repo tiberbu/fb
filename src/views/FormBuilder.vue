@@ -338,13 +338,10 @@ const container = ref<HTMLElement | null>(null);
 // Form state
 const tabs = ref<Array<{ label: string; sections: any[] }>>([
   {
-    label: "Details",
+    label: "Tab 1",
     sections: [],
   },
-  {
-    label: "More Info",
-    sections: [],
-  },
+  
 ]);
 const activeTab = ref(0);
 const selectedTab = ref<number | null>(null);
@@ -498,6 +495,7 @@ function selectSection(section: any) {
   selectedSection.value = section.id;
   selectedControl.value = null;
   selectedColumn.value = null;
+  selectedTab.value = null; // Clear the selected tab when selecting a section
 }
 
 // Select a column
@@ -505,6 +503,7 @@ function selectColumn(sectionId: string, columnIndex: number) {
   selectedColumn.value = { sectionId, columnIndex };
   selectedSection.value = null;
   selectedControl.value = null;
+  selectedTab.value = null; // Clear the selected tab when selecting a column
 }
 
 // Get section by id
