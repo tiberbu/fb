@@ -382,7 +382,7 @@ const options = computed(() => {
             color: var(--danger-darker, #ff3535);
           }
         }
-      }
+      } 
 
       .btn-section {
         display: inline-flex;

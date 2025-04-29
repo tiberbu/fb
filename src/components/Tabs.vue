@@ -26,11 +26,10 @@
             @click.stop="activateTab(tab)"
             @mouseover.stop="dragOver(tab)"
           >
-          
             <EditableInput
+              v-model="tab.df.label"
               :text="tab.df.label"
               :placeholder="'Tab Title'"
-              v-model="tab.df.label"
               @click.stop
             />
             <button
@@ -50,10 +49,13 @@
         class="add-tab-btn"
         @click.stop="addNewTab"
       >
-        <i class="fa fa-plus"></i>
+        <i class="fa fa-plus" />
       </button>
     </div>
-    <div v-if="store.currentTab" class="tab-content">
+    <div
+      v-if="store.currentTab"
+      class="tab-content"
+    >
       <draggable
         v-model="store.currentTab.sections"
         group="sections"
@@ -72,9 +74,13 @@
           />
         </template>
       </draggable>
-      <div class="add-section" @click.stop="addNewSection" v-if="!store.readOnly">
+      <div
+        v-if="!store.readOnly"
+        class="add-section"
+        @click.stop="addNewSection"
+      >
         <div class="add-section-button">
-          <i class="fa fa-plus"></i>
+          <i class="fa fa-plus" />
           <span>Add Section</span>
         </div>
       </div>
@@ -83,6 +89,8 @@
 </template>
 
 <script setup lang="ts">
+// Shims for .vue imports
+// import type { DefineComponent } from 'vue';
 import draggable from "vuedraggable";
 import Section from "./Section.vue";
 import EditableInput from "./EditableInput.vue";
@@ -91,6 +99,7 @@ import { useFormBuilderStore } from "../stores/form-builder-store";
 import { sectionBoilerplate, confirmDialog, isTouchScreenDevice } from "../utils/form-builder-utils";
 import { ref, computed } from "vue";
 import { useMagicKeys, whenever } from "@vueuse/core";
+import type { Tab } from '../types/form-builder';
 
 const store = useFormBuilderStore();
 
@@ -98,7 +107,7 @@ const store = useFormBuilderStore();
 const { Backspace } = useMagicKeys();
 whenever(Backspace, (value) => {
   if (value && selected.value && store.notUsingInput) {
-    removeTab(store.currentTab, "", true);
+    removeTab(store.currentTab as Tab, undefined, true);
   }
 });
 
@@ -106,44 +115,16 @@ const dragged = ref(false);
 const selected = computed(() => store.selected(store.currentTab?.df.name || ''));
 const hasTabs = computed(() => (store.form.layout.tabs?.length ?? 0) > 1);
 
-function activateTab(tab) {
+function activateTab(tab: Tab) {
   store.activateTab(tab);
 }
 
-// This function is called when a tab is double-clicked
-function startEditingTab(tab) {
-  // Find the EditableInput component inside the tab and simulate a double-click
-  // to activate its built-in editing capabilities
-  const tabElement = document.querySelector(`.tab-drag-handle.${store.form.activeTab === tab.df.name ? 'active' : ''}`);
-  if (tabElement) {
-    const editableInput = tabElement.querySelector('.editable-input');
-    if (editableInput) {
-      // Create and dispatch a double-click event to trigger EditableInput's edit mode
-      const event = new MouseEvent('dblclick', {
-        bubbles: true,
-        cancelable: true,
-        view: window
-      });
-      editableInput.dispatchEvent(event);
-    }
-  }
-}
-
-// This function is used to set references to editable input elements
-function setTabEditRef(el, tab) {
-  // Store reference to the editable input element
-  if (el && tab) {
-    // No need to store in a map since the ref is already bound to the specific element
-    // This function is required by Vue's template to handle the dynamic ref binding
-  }
-}
-
-
-function dragOver(tab) {
-  !dragged.value &&
+function dragOver(tab: Tab) {
+  if (!dragged.value) {
     setTimeout(() => {
       store.form.activeTab = tab.df.name;
     }, 500);
+  }
 }
 
 function addNewTab() {
@@ -151,23 +132,24 @@ function addNewTab() {
 }
 
 function addNewSection() {
+  if (!store.currentTab) return;
   let section = sectionBoilerplate();
   store.currentTab.sections.push(section);
   store.form.selectedField = section.df;
 }
 
-function isTabEmpty(tab) {
+function isTabEmpty(tab: Tab) {
   // check if sections have columns and they contain fields
-  return !tab.sections.some((section) => 
-    section.columns.some((column) => column.fields.length > 0)
+  return !tab.sections.some((section: any) =>
+    section.columns.some((column: any) => column.fields.length > 0)
   );
 }
 
-function removeTab(tab, event, force = false) {
+function removeTab(tab: Tab, event?: Event, force = false) {
   // if remove_tab_btn is not visible then return
-  if (!event?.currentTarget?.offsetParent && !force) return;
+  if (event && !(event as any)?.currentTarget?.offsetParent && !force) return;
 
-  if (store.isCustomizeForm && store.currentTab.df.isCustomField == 0) {
+  if (store.isCustomizeForm && store.currentTab?.df.isCustomField == 0) {
     alert("Cannot delete standard field. You can hide it if you want");
     throw "cannot delete standard field";
   } else if (store.hasStandardField(store.currentTab)) {
@@ -180,13 +162,15 @@ function removeTab(tab, event, force = false) {
       "Are you sure you want to delete the tab? All the sections along with fields in the tab will be moved to the previous tab.",
       () => deleteTab(tab),
       "Delete tab",
+      undefined,
+      undefined,
       () => deleteTab(tab, true),
       "Delete entire tab with fields"
     );
   }
 }
 
-function deleteTab(tab, withChildren = false) {
+function deleteTab(tab: Tab, withChildren = false) {
   let tabs = store.form.layout.tabs;
   let index = tabs.indexOf(tab);
 

@@ -1,16 +1,16 @@
 <template>
   <div class="properties-panel p-4">
     <h3 class="text-lg font-medium text-gray-800 mb-4">
-      {{ isSection ? 'Section Properties' : 'Field Properties' }}
+      {{ isSectionSelected ? 'Section Properties' : 'Field Properties' }}
     </h3>
     
     <!-- Section Properties -->
-    <template v-if="isSection && store.form.selectedField">
+    <template v-if="isSectionSelected">
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Section Title</label>
         <input 
           type="text" 
-          v-model="store.form.selectedField.label" 
+          v-model="selectedField.label" 
           class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
         >
       </div>
@@ -18,7 +18,7 @@
       <div class="mb-4">
         <label class="block text-sm text-gray-600 mb-1">Description</label>
         <textarea 
-          v-model="store.form.selectedField.description" 
+          v-model="selectedField.description" 
           class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
           rows="3"
         ></textarea>
@@ -29,7 +29,7 @@
           <input 
             type="checkbox" 
             id="collapsible-toggle" 
-            v-model="store.form.selectedField.collapsible" 
+            v-model="sectionCollapsible" 
             class="mr-2"
           >
           <label for="collapsible-toggle" class="text-sm text-gray-600">Collapsible Section</label>
@@ -163,31 +163,69 @@ const emit = defineEmits(['update']);
 const store = useFormBuilderStore();
 
 // Check if the selected field is a section
-const isSection = computed(() => {
-  return store.form.selectedField?.fieldtype === 'Section Break' || 
-         store.form.selectedField?.type === 'Section Break';
+const isSectionSelected = computed(() => {
+  return store.form.selectedField && 
+         (store.form.selectedField.fieldtype === 'Section Break' || 
+          (store.form.selectedField.df && store.form.selectedField.df.fieldtype === 'Section Break'));
+});
+
+// Get the selected field with proper type handling
+const selectedField = computed(() => {
+  const field = store.form.selectedField;
+  if (!field) return {};
+  
+  // Handle both direct field and field with df property
+  return field.df || field;
+});
+
+// Handle section collapsible property with proper conversion
+const sectionCollapsible = computed({
+  get: () => {
+    const collapsible = selectedField.value.collapsible;
+    return collapsible === 1 || collapsible === true;
+  },
+  set: (value) => {
+    if (selectedField.value) {
+      selectedField.value.collapsible = value ? 1 : 0;
+    }
+  }
 });
 
 function addOption() {
-  if (props.control.options) {
-    const newIndex = props.control.options.length + 1;
-    props.control.options.push({
-      label: `Option ${newIndex}`,
-      value: `option_${newIndex}`
-    });
-  }
+  if (!props.control.options) return;
+  
+  const optionsCopy = [...props.control.options];
+  const newIndex = optionsCopy.length + 1;
+  optionsCopy.push({
+    label: `Option ${newIndex}`,
+    value: `option_${newIndex}`
+  });
+  
+  // Update immutably
+  emit('update', {
+    ...props.control,
+    options: optionsCopy
+  });
 }
 
 function removeOption(index: number) {
-  if (props.control.options) {
-    props.control.options.splice(index, 1);
-  }
+  if (!props.control.options) return;
+  
+  const optionsCopy = [...props.control.options];
+  optionsCopy.splice(index, 1);
+  
+  // Update immutably
+  emit('update', {
+    ...props.control,
+    options: optionsCopy
+  });
 }
 
 function deleteSection() {
-  // Check if a section is selected
+  // Get current tab and selected field
+  const currentTab = store.currentTab;
   const currentField = store.form.selectedField;
-  if (!currentField || currentField.fieldtype !== 'Section Break') return;
+  if (!currentTab || !currentField) return;
   
   // Check if it's a standard field in customize form mode
   if (store.isCustomizeForm && currentField.isCustomField === 0) {
@@ -195,59 +233,60 @@ function deleteSection() {
     return;
   }
   
+  // Get section name - could be directly on field or in df property
+  const sectionName = currentField.df ? currentField.df.name : currentField.name;
+  if (!sectionName) return;
+  
   confirmDialog(
     "Delete Section",
-    `Are you sure you want to delete the section "${currentField.label || 'Untitled Section'}"?`,
+    `Are you sure you want to delete this section?`,
     () => {
-      // Find and delete the section
-      const currentTab = store.currentTab;
-      if (!currentTab) return;
-      
+      // Find the section in the tab
       const sectionIndex = currentTab.sections.findIndex(section => 
-        section.df.name === currentField.name
+        section.df.name === sectionName
       );
       
-      if (sectionIndex > -1) {
-        // Check if section has fields
-        const hasFields = currentTab.sections[sectionIndex].columns.some(column => 
-          column.fields && column.fields.length > 0
-        );
-        
-        if (hasFields) {
-          // If section has fields, ask if they should be moved to previous section
-          confirmDialog(
-            "Section Contains Fields",
-            "This section contains fields. Would you like to move them to the previous section?",
-            () => {
-              // Move fields to previous section
-              if (sectionIndex > 0) {
-                const prevSection = currentTab.sections[sectionIndex - 1];
-                const currentSection = currentTab.sections[sectionIndex];
-                
-                // Move columns to previous section
-                prevSection.columns = [...prevSection.columns, ...currentSection.columns];
-              }
+      if (sectionIndex === -1) return;
+      
+      // Check if section has fields
+      const hasFields = currentTab.sections[sectionIndex].columns.some(column => 
+        column.fields && column.fields.length > 0
+      );
+      
+      if (hasFields) {
+        // If section has fields, confirm with the user
+        confirmDialog(
+          "Section Contains Fields",
+          "This section contains fields. Would you like to move them to the previous section?",
+          () => {
+            // Move fields to previous section if possible
+            if (sectionIndex > 0) {
+              const prevSection = currentTab.sections[sectionIndex - 1];
+              const currentSection = currentTab.sections[sectionIndex];
               
-              // Then delete the section
-              currentTab.sections.splice(sectionIndex, 1);
-              store.form.selectedField = null;
-            },
-            "Move Fields",
-            () => {
-              // Just delete section and its fields
-              currentTab.sections.splice(sectionIndex, 1);
-              store.form.selectedField = null;
-            },
-            "Delete Everything"
-          );
-        } else {
-          // If section is empty, just delete it
-          currentTab.sections.splice(sectionIndex, 1);
-          store.form.selectedField = null;
-        }
+              // Move columns to previous section
+              prevSection.columns = [...prevSection.columns, ...currentSection.columns];
+            }
+            
+            // Delete the section
+            currentTab.sections.splice(sectionIndex, 1);
+            store.form.selectedField = null;
+          },
+          "Move Fields",
+          () => {
+            // Just delete section and its fields
+            currentTab.sections.splice(sectionIndex, 1);
+            store.form.selectedField = null;
+          } as any,
+          "Delete Everything"
+        );
+      } else {
+        // If section is empty, just delete it
+        currentTab.sections.splice(sectionIndex, 1);
+        store.form.selectedField = null;
       }
     },
-    "Delete"
+    "Delete" as any
   );
 }
 
@@ -283,7 +322,7 @@ function deleteField() {
         }
       }
     },
-    "Delete"
+    "Delete" as any
   );
 }
 </script>
