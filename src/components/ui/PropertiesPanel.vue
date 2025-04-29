@@ -1,7 +1,21 @@
 <template>
   <div class="properties-panel p-4">
     <h3 class="text-lg font-medium text-gray-800 mb-4">
-      {{ isSection ? 'Section Properties 1' : 'Field Properties' }}
+      {{ isSection ?       <!-- Action Buttons -->
+      <div class="flex justify-between mt-6">
+        <button 
+          @click="$emit('delete', control.id)" 
+          class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+        >
+          Delete Field
+        </button>
+        <button 
+          @click="$emit('update', control)" 
+          class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
+        >
+          Update Field
+        </button>
+      </div>ties 1' : 'Field Properties' }}
     </h3>
     
     <!-- Section Properties -->
@@ -126,7 +140,7 @@
       <!-- Action Buttons -->
       <div class="flex justify-between mt-6">
         <button 
-          @click="deleteField" 
+          @click="$emit('delete', control.id)"
           class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
         >
           Delete Field
@@ -159,7 +173,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update']);
+const emit = defineEmits(['update', 'delete']);
 const store = useFormBuilderStore();
 
 // Check if the selected field is a section

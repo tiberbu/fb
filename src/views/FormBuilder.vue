@@ -101,52 +101,66 @@
                   </div>
 
                   <div class="section-columns">
-                    <draggable
-                      v-for="(column, colIndex) in section.columns"
+                    <div 
+                      v-for="(column, colIndex) in section.columns" 
                       :key="colIndex"
-                      v-model="column.fields"
-                      group="fields"
-                      item-key="id"
-                      ghost-class="ghost-item"
-                      class="column"
+                      :class="[
+                        'column-wrapper', 
+                        selectedColumn?.sectionId === section.id && 
+                          selectedColumn?.columnIndex === colIndex ? 'selected-column' : ''
+                      ]"
                     >
-                      <template #item="{ element: field }">
-                        <DraggableItem
-                          :control="field"
-                          :selected="selectedControl?.id === field.id"
-                          @edit="editControl"
-                          @delete="deleteControl"
-                        />
-                      </template>
-                      <template #footer>
-                        <div class="add-field-container relative">
-                          <button
-                            class="add-field-button"
-                            @click="openFieldSelector(section, colIndex)"
-                          >
-                            <i class="fas fa-plus text-xs mr-1" />
-                            Add Field
-                          </button>
+                      <div 
+                        class="column-header"
+                        @click.stop="selectColumn(section.id, colIndex)"
+                      >
+                        <span>Column {{ colIndex + 1 }}</span>
+                      </div>
+                      <draggable
+                        v-model="column.fields"
+                        group="fields"
+                        item-key="id"
+                        ghost-class="ghost-item"
+                        class="column"
+                      >
+                        <template #item="{ element: field }">
+                          <DraggableItem
+                            :control="field"
+                            :selected="selectedControl?.id === field.id"
+                            @edit="editControl"
+                            @delete="(id) => { deleteControl(id); }"
+                          />
+                        </template>
+                        <template #footer>
+                          <div class="add-field-container relative">
+                            <button
+                              class="add-field-button"
+                              @click="openFieldSelector(section, colIndex)"
+                            >
+                              <i class="fas fa-plus text-xs mr-1" />
+                              Add Field
+                            </button>
 
-                          <div
-                            v-if="
-                              showFieldSelector &&
-                              activeSection === section.id &&
-                              activeColumn === colIndex
-                            "
-                            class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
-                          >
-                            <FieldTypeSelector
-                              @select-field-type="
-                                (type) =>
-                                  addFieldToColumn(section, colIndex, type)
+                            <div
+                              v-if="
+                                showFieldSelector &&
+                                  activeSection === section.id &&
+                                  activeColumn === colIndex
                               "
-                              @close="closeFieldSelector"
-                            />
+                              class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
+                            >
+                              <FieldTypeSelector
+                                @select-field-type="
+                                  (type) =>
+                                    addFieldToColumn(section, colIndex, type)
+                                "
+                                @close="closeFieldSelector"
+                              />
+                            </div>
                           </div>
-                        </div>
-                      </template>
-                    </draggable>
+                        </template>
+                      </draggable>
+                    </div>
 
                     <button
                       v-if="section.columns.length < 3"
@@ -253,6 +267,27 @@
           </div>
         </div>
         <div
+          v-else-if="selectedColumn"
+          class="column-properties"
+        >
+          <h3 class="font-medium text-gray-700 mb-3">
+            Column Properties
+          </h3>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600">
+              Column {{ selectedColumn.columnIndex + 1 }} in section "{{ getSectionById(selectedColumn.sectionId).title || 'Untitled Section' }}"
+            </p>
+          </div>
+          <div class="mb-4">
+            <button
+              class="delete-column-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              @click="deleteColumn(selectedColumn.sectionId, selectedColumn.columnIndex)"
+            >
+              <i class="fas fa-trash-alt mr-2" />Delete Column
+            </button>
+          </div>
+        </div>
+        <div
           v-else
           class="empty-sidebar"
         >
@@ -314,6 +349,7 @@ const activeTab = ref(0);
 const selectedTab = ref<number | null>(null);
 const selectedControl = ref<Control | null>(null);
 const selectedSection = ref<string | null>(null);
+const selectedColumn = ref<{sectionId: string; columnIndex: number} | null>(null);
 const previewMode = ref(false);
 
 // Tab editing state
@@ -460,6 +496,14 @@ function deleteSection(sectionId: string) {
 function selectSection(section: any) {
   selectedSection.value = section.id;
   selectedControl.value = null;
+  selectedColumn.value = null;
+}
+
+// Select a column
+function selectColumn(sectionId: string, columnIndex: number) {
+  selectedColumn.value = { sectionId, columnIndex };
+  selectedSection.value = null;
+  selectedControl.value = null;
 }
 
 // Get section by id
@@ -473,6 +517,26 @@ function addColumnToSection(section: any) {
     section.columns.push({
       fields: [],
     });
+  }
+}
+
+// Delete a column from a section
+function deleteColumn(sectionId: string, columnIndex: number) {
+  const section = getSectionById(sectionId);
+  // Only allow deleting if there's more than one column
+  if (section.columns && section.columns.length > 1) {
+    // If there are fields in this column, confirm deletion
+    if (section.columns[columnIndex].fields && section.columns[columnIndex].fields.length > 0) {
+      if (confirm("This column contains fields. Are you sure you want to delete it?")) {
+        section.columns.splice(columnIndex, 1);
+        selectedColumn.value = null;
+      }
+    } else {
+      section.columns.splice(columnIndex, 1);
+      selectedColumn.value = null;
+    }
+  } else {
+    alert("Cannot delete the only column in a section.");
   }
 }
 
@@ -626,4 +690,32 @@ function deleteTab(index: number) {
 <style>
 /* Import the Frappe Form Builder CSS */
 @import "../assets/frappe-form-builder.css";
+
+.column-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.column-wrapper.selected-column .column {
+  border: 2px solid #4F46E5;
+  border-radius: 4px;
+}
+
+.column-header {
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+  cursor: pointer;
+  background-color: #F3F4F6;
+  border-radius: 4px 4px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.column-header:hover {
+  background-color: #E5E7EB;
+}
 </style>
