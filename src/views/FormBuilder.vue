@@ -189,94 +189,10 @@
                         </button>
                       </div>
                     </div>
-                    
-                    <div class="row-actions">
-                      <button
-                        class="add-row-button"
-                        @click="addRowToSection(section)"
-                      >
-                        <i class="fas fa-plus text-xs mr-1" />
-                        Add Row
-                      </button>
-                    </div>
                   </div>
-
-                  <div class="section-rows">
-                    <div
-                      v-for="(row, rowIndex) in section.rows"
-                      :key="row.id"
-                      class="row"
-                    >
-                      <div class="row-header">
-                        <span>Row {{ rowIndex + 1 }}</span>
-                        <button
-                          class="delete-row-button"
-                          @click="deleteRow(section.id, rowIndex)"
-                        >
-                          <i class="fas fa-trash-alt" />
-                        </button>
-                      </div>
-                      <draggable
-                        v-model="row.columns"
-                        group="columns"
-                        item-key="id"
-                        ghost-class="ghost-item"
-                        class="columns-container"
-                      >
-                        <template #item="{ element: column }">
-                          <div class="column">
-                            <div class="column-title">{{ column.title }}</div>
-                            <draggable
-                              v-model="column.fields"
-                              group="fields"
-                              item-key="id"
-                              ghost-class="ghost-item"
-                              class="fields-container"
-                            >
-                              <template #item="{ element: field }">
-                                <DraggableItem
-                                  :control="field"
-                                  :selected="selectedControl?.id === field.id"
-                                  @edit="editControl"
-                                  @delete="(id) => { deleteControl(id); }"
-                                />
-                              </template>
-                              <template #footer>
-                                <div class="add-field-container relative">
-                                  <button
-                                    class="add-field-button"
-                                    @click="openFieldSelector(section, colIndex)"
-                                  >
-                                    <i class="fas fa-plus text-xs mr-1" />
-                                    Add Field
-                                  </button>
-
-                                  <div
-                                    v-if="
-                                      showFieldSelector &&
-                                        activeSection === section.id &&
-                                        activeColumn === colIndex
-                                    "
-                                    class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
-                                  >
-                                    <FieldTypeSelector
-                                      @select-field-type="
-                                        (type) =>
-                                          addFieldToColumn(section, colIndex, type)
-                                      "
-                                      @close="closeFieldSelector"
-                                    />
-                                  </div>
-                                </div>
-                              </template>
-                            </draggable>
-                          </div>
-                        </template>
-                      </draggable>
-                    </div>
-
+                  
+                  <div class="row-actions">
                     <button
-                      v-if="section.rows.length < 3"
                       class="add-row-button"
                       @click="addRowToSection(section)"
                     >
