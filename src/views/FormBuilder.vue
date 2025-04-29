@@ -196,6 +196,7 @@
           v-if="selectedControl"
           :control="selectedControl"
           @update="updateControlProps"
+          @delete="deleteControl"
         />
         <div
           v-else-if="selectedTab !== null"
