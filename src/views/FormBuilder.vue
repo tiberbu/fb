@@ -100,75 +100,188 @@
                     </div>
                   </div>
 
-                  <div class="section-columns">
+                  <div class="section-rows">
                     <div 
-                      v-for="(column, colIndex) in section.columns" 
-                      :key="colIndex"
+                      v-for="(row, rowIndex) in section.rows || [{id: uuidv4(), columns: section.columns || []}]" 
+                      :key="row.id || rowIndex"
                       :class="[
-                        'column-wrapper', 
-                        selectedColumn?.sectionId === section.id && 
-                          selectedColumn?.columnIndex === colIndex ? 'selected-column' : ''
+                        'row-wrapper',
+                        selectedRow?.sectionId === section.id && 
+                          selectedRow?.rowIndex === rowIndex ? 'selected-row' : ''
                       ]"
                     >
-                      <div 
-                        class="column-header"
-                        @click.stop="selectColumn(section.id, colIndex)"
+                      <div
+                        class="row-header"
+                        @click.stop="selectRow(section.id, rowIndex)"
                       >
-                        <span>Column {{ colIndex + 1 }}</span>
+                        <span>Row {{ rowIndex + 1 }}</span>
+                      </div>
+                      <div class="row-columns">
+                        <div 
+                          v-for="(column, colIndex) in row.columns" 
+                          :key="colIndex"
+                          :class="[
+                            'column-wrapper', 
+                            selectedColumn?.sectionId === section.id && 
+                              selectedColumn?.columnIndex === colIndex ? 'selected-column' : ''
+                          ]"
+                        >
+                          <div 
+                            class="column-header"
+                            @click.stop="selectColumn(section.id, colIndex)"
+                          >
+                            <span>Column {{ colIndex + 1 }}</span>
+                          </div>
+                          <draggable
+                            v-model="column.fields"
+                            group="fields"
+                            item-key="id"
+                            ghost-class="ghost-item"
+                            class="column"
+                          >
+                            <template #item="{ element: field }">
+                              <DraggableItem
+                                :control="field"
+                                :selected="selectedControl?.id === field.id"
+                                @edit="editControl"
+                                @delete="(id) => { deleteControl(id); }"
+                              />
+                            </template>
+                            <template #footer>
+                              <div class="add-field-container relative">
+                                <button
+                                  class="add-field-button"
+                                  @click="openFieldSelector(section, rowIndex, colIndex)"
+                                >
+                                  <i class="fas fa-plus text-xs mr-1" />
+                                  Add Field
+                                </button>
+
+                                <div
+                                  v-if="
+                                    showFieldSelector &&
+                                      activeSection === section.id &&
+                                      activeRowIndex === rowIndex &&
+                                      activeColumn === colIndex
+                                  "
+                                  class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
+                                >
+                                  <FieldTypeSelector
+                                    @select-field-type="
+                                      (type) =>
+                                        addFieldToColumn(section, rowIndex, colIndex, type)
+                                    "
+                                    @close="closeFieldSelector"
+                                  />
+                                </div>
+                              </div>
+                            </template>
+                          </draggable>
+                        </div>
+
+                        <button
+                          v-if="row.columns.length < 3"
+                          class="add-column-button"
+                          @click="addColumnToRow(section, rowIndex)"
+                        >
+                          <i class="fas fa-plus text-xs mr-1" />
+                          Add Column
+                        </button>
+                      </div>
+                    </div>
+                    
+                    <div class="row-actions">
+                      <button
+                        class="add-row-button"
+                        @click="addRowToSection(section)"
+                      >
+                        <i class="fas fa-plus text-xs mr-1" />
+                        Add Row
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="section-rows">
+                    <div
+                      v-for="(row, rowIndex) in section.rows"
+                      :key="row.id"
+                      class="row"
+                    >
+                      <div class="row-header">
+                        <span>Row {{ rowIndex + 1 }}</span>
+                        <button
+                          class="delete-row-button"
+                          @click="deleteRow(section.id, rowIndex)"
+                        >
+                          <i class="fas fa-trash-alt" />
+                        </button>
                       </div>
                       <draggable
-                        v-model="column.fields"
-                        group="fields"
+                        v-model="row.columns"
+                        group="columns"
                         item-key="id"
                         ghost-class="ghost-item"
-                        class="column"
+                        class="columns-container"
                       >
-                        <template #item="{ element: field }">
-                          <DraggableItem
-                            :control="field"
-                            :selected="selectedControl?.id === field.id"
-                            @edit="editControl"
-                            @delete="(id) => { deleteControl(id); }"
-                          />
-                        </template>
-                        <template #footer>
-                          <div class="add-field-container relative">
-                            <button
-                              class="add-field-button"
-                              @click="openFieldSelector(section, colIndex)"
+                        <template #item="{ element: column }">
+                          <div class="column">
+                            <div class="column-title">{{ column.title }}</div>
+                            <draggable
+                              v-model="column.fields"
+                              group="fields"
+                              item-key="id"
+                              ghost-class="ghost-item"
+                              class="fields-container"
                             >
-                              <i class="fas fa-plus text-xs mr-1" />
-                              Add Field
-                            </button>
+                              <template #item="{ element: field }">
+                                <DraggableItem
+                                  :control="field"
+                                  :selected="selectedControl?.id === field.id"
+                                  @edit="editControl"
+                                  @delete="(id) => { deleteControl(id); }"
+                                />
+                              </template>
+                              <template #footer>
+                                <div class="add-field-container relative">
+                                  <button
+                                    class="add-field-button"
+                                    @click="openFieldSelector(section, colIndex)"
+                                  >
+                                    <i class="fas fa-plus text-xs mr-1" />
+                                    Add Field
+                                  </button>
 
-                            <div
-                              v-if="
-                                showFieldSelector &&
-                                  activeSection === section.id &&
-                                  activeColumn === colIndex
-                              "
-                              class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
-                            >
-                              <FieldTypeSelector
-                                @select-field-type="
-                                  (type) =>
-                                    addFieldToColumn(section, colIndex, type)
-                                "
-                                @close="closeFieldSelector"
-                              />
-                            </div>
+                                  <div
+                                    v-if="
+                                      showFieldSelector &&
+                                        activeSection === section.id &&
+                                        activeColumn === colIndex
+                                    "
+                                    class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
+                                  >
+                                    <FieldTypeSelector
+                                      @select-field-type="
+                                        (type) =>
+                                          addFieldToColumn(section, colIndex, type)
+                                      "
+                                      @close="closeFieldSelector"
+                                    />
+                                  </div>
+                                </div>
+                              </template>
+                            </draggable>
                           </div>
                         </template>
                       </draggable>
                     </div>
 
                     <button
-                      v-if="section.columns.length < 3"
-                      class="add-column-button"
-                      @click="addColumnToSection(section)"
+                      v-if="section.rows.length < 3"
+                      class="add-row-button"
+                      @click="addRowToSection(section)"
                     >
                       <i class="fas fa-plus text-xs mr-1" />
-                      Add Column
+                      Add Row
                     </button>
                   </div>
                 </div>
@@ -289,6 +402,27 @@
           </div>
         </div>
         <div
+          v-else-if="selectedRow"
+          class="row-properties"
+        >
+          <h3 class="font-medium text-gray-700 mb-3">
+            Row Properties
+          </h3>
+          <div class="mb-4">
+            <p class="text-sm text-gray-600">
+              Row {{ selectedRow.rowIndex + 1 }} in section "{{ getSectionById(selectedRow.sectionId).title || 'Untitled Section' }}"
+            </p>
+          </div>
+          <div class="mb-4">
+            <button
+              class="delete-row-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
+              @click="deleteRow(selectedRow.sectionId, selectedRow.rowIndex)"
+            >
+              <i class="fas fa-trash-alt mr-2" />Delete Row
+            </button>
+          </div>
+        </div>
+        <div
           v-else
           class="empty-sidebar"
         >
@@ -348,6 +482,7 @@ const selectedTab = ref<number | null>(null);
 const selectedControl = ref<Control | null>(null);
 const selectedSection = ref<string | null>(null);
 const selectedColumn = ref<{sectionId: string; columnIndex: number} | null>(null);
+const selectedRow = ref<{sectionId: string; rowIndex: number} | null>(null);
 const previewMode = ref(false);
 
 // Tab editing state
@@ -357,6 +492,7 @@ const tabInputRef = ref<HTMLInputElement | null>(null);
 // Field selector state
 const showFieldSelector = ref(false);
 const activeSection = ref<string | null>(null);
+const activeRowIndex = ref<number | null>(null);
 const activeColumn = ref<number | null>(null);
 
 // We don't need separate Tab properties panel state anymore
@@ -445,14 +581,31 @@ function regenerateIds(tab: any) {
   tab.sections.forEach((section: any) => {
     // Assign new ID to section
     section.id = uuidv4();
-    // Process columns and their fields
-    if (section.columns) {
+    // Process rows, columns and their fields
+    if (section.rows) {
+      section.rows.forEach((row: any) => {
+        // Assign new ID to row
+        row.id = uuidv4();
+        
+        if (row.columns) {
+          row.columns.forEach((column: any) => {
+            if (column.fields) {
+              column.fields.forEach((field: any) => {
+                // Assign new ID to each field
+                field.id = uuidv4();
+                // Give the field a unique name to avoid conflicts
+                field.name = `${field.name}_${Date.now().toString().slice(-4)}`;
+              });
+            }
+          });
+        }
+      });
+    } else if (section.columns) {
+      // Handle legacy sections with direct columns (for backward compatibility)
       section.columns.forEach((column: any) => {
         if (column.fields) {
           column.fields.forEach((field: any) => {
-            // Assign new ID to each field
             field.id = uuidv4();
-            // Give the field a unique name to avoid conflicts
             field.name = `${field.name}_${Date.now().toString().slice(-4)}`;
           });
         }
@@ -467,10 +620,15 @@ function addSection() {
     id: uuidv4(),
     title: `Section ${currentTabSections.value.length + 1}`,
     collapsible: false,
-    columns: [
+    rows: [
       {
-        fields: [],
-      },
+        id: uuidv4(),
+        columns: [
+          {
+            fields: [],
+          },
+        ],
+      }
     ],
   };
   if (tabs.value[activeTab.value]) {
@@ -504,6 +662,55 @@ function selectColumn(sectionId: string, columnIndex: number) {
   selectedSection.value = null;
   selectedControl.value = null;
   selectedTab.value = null; // Clear the selected tab when selecting a column
+}
+
+// Select a row
+function selectRow(sectionId: string, rowIndex: number) {
+  selectedRow.value = { sectionId, rowIndex };
+  selectedSection.value = null;
+  selectedControl.value = null;
+  selectedColumn.value = null;
+  selectedTab.value = null;
+}
+
+// Add a row to a section
+function addRowToSection(section: any) {
+  section.rows.push({
+    id: uuidv4(),
+    columns: [
+      {
+        fields: [],
+      },
+    ],
+  });
+}
+
+// Delete a row from a section
+function deleteRow(sectionId: string, rowIndex: number) {
+  const section = getSectionById(sectionId);
+  // Only allow deleting if there's more than one row
+  if (section.rows && section.rows.length > 1) {
+    // Check if any columns in the row have fields
+    const rowHasFields = section.rows[rowIndex].columns.some(
+      (column: any) => column.fields && column.fields.length > 0
+    );
+    
+    if (rowHasFields) {
+      if (confirm("This row contains fields. Are you sure you want to delete it?")) {
+        section.rows.splice(rowIndex, 1);
+        if (selectedRow.value?.sectionId === sectionId && selectedRow.value?.rowIndex === rowIndex) {
+          selectedRow.value = null;
+        }
+      }
+    } else {
+      section.rows.splice(rowIndex, 1);
+      if (selectedRow.value?.sectionId === sectionId && selectedRow.value?.rowIndex === rowIndex) {
+        selectedRow.value = null;
+      }
+    }
+  } else {
+    alert("Cannot delete the only row in a section.");
+  }
 }
 
 // Get section by id
@@ -541,21 +748,24 @@ function deleteColumn(sectionId: string, columnIndex: number) {
 }
 
 // Field selector functions
-function openFieldSelector(section: any, colIndex: number) {
+function openFieldSelector(section: any, rowIndex: number, colIndex: number) {
   showFieldSelector.value = true;
   activeSection.value = section.id;
+  activeRowIndex.value = rowIndex;
   activeColumn.value = colIndex;
 }
 
 function closeFieldSelector() {
   showFieldSelector.value = false;
   activeSection.value = null;
+  activeRowIndex.value = null;
   activeColumn.value = null;
 }
 
 // Add a field to a column
 function addFieldToColumn(
   section: any,
+  rowIndex: number,
   columnIndex: number,
   type: ControlType = "text"
 ) {
@@ -570,7 +780,7 @@ function addFieldToColumn(
       type === "select" ? [{ label: "Option 1", value: "option_1" }] : [],
     order: 0,
   };
-  section.columns[columnIndex].fields.push(newControl);
+  section.rows[rowIndex].columns[columnIndex].fields.push(newControl);
   selectedControl.value = newControl;
   closeFieldSelector();
 }
@@ -613,17 +823,36 @@ function editControl(control: Control) {
 
 // Delete a control
 function deleteControl(id: string) {
-  // Find and remove the control from any section/column
+  // Find and remove the control from any section/row/column
   const sections = currentTabSections.value;
   for (const section of sections) {
-    for (const column of section.columns) {
-      const index = column.fields.findIndex((field: any) => field.id === id);
-      if (index !== -1) {
-        column.fields.splice(index, 1);
-        if (selectedControl.value?.id === id) {
-          selectedControl.value = null;
+    // Check if section uses the row structure
+    if (section.rows) {
+      // Look through rows
+      for (const row of section.rows) {
+        // Look through columns in the row
+        for (const column of row.columns) {
+          const index = column.fields.findIndex((field: any) => field.id === id);
+          if (index !== -1) {
+            column.fields.splice(index, 1);
+            if (selectedControl.value?.id === id) {
+              selectedControl.value = null;
+            }
+            return;
+          }
         }
-        return;
+      }
+    } else if (section.columns) {
+      // Legacy support for sections with direct columns
+      for (const column of section.columns) {
+        const index = column.fields.findIndex((field: any) => field.id === id);
+        if (index !== -1) {
+          column.fields.splice(index, 1);
+          if (selectedControl.value?.id === id) {
+            selectedControl.value = null;
+          }
+          return;
+        }
       }
     }
   }
@@ -685,11 +914,85 @@ function deleteTab(index: number) {
     }
   }
 }
+
+// Add a column to a specific row
+function addColumnToRow(section: any, rowIndex: number) {
+  if (section.rows[rowIndex].columns.length < 3) {
+    section.rows[rowIndex].columns.push({
+      fields: [],
+    });
+  }
+}
 </script>
 
 <style>
 /* Import the Frappe Form Builder CSS */
 @import "../assets/frappe-form-builder.css";
+
+.section-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px;
+}
+
+.row-wrapper {
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  background-color: #F9FAFB;
+  padding: 8px;
+}
+
+.row-wrapper.selected-row {
+  border: 2px solid #4F46E5;
+}
+
+.row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  background-color: #F3F4F6;
+  border-radius: 4px 4px 0 0;
+  font-weight: 500;
+  font-size: 13px;
+  color: #4B5563;
+  cursor: pointer;
+}
+
+.row-header:hover {
+  background-color: #E5E7EB;
+}
+
+.row-columns {
+  display: flex;
+  gap: 12px;
+}
+
+.row-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.add-row-button {
+  background-color: #F3F4F6;
+  color: #4B5563;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #D1D5DB;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-row-button:hover {
+  background-color: #E5E7EB;
+}
 
 .column-wrapper {
   position: relative;
