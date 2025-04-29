@@ -340,15 +340,55 @@
         </div>
         <div
           v-else
-          class="empty-sidebar"
+          class="form-configuration"
         >
-          <div class="empty-state">
-            <div class="icon-container mb-3">
-              <i class="fas fa-mouse-pointer text-gray-400" />
+          <h3 class="font-medium text-gray-700 mb-3">
+            Form Configuration
+          </h3>
+          
+          <div class="mb-4">
+            <label class="block text-sm text-gray-600 mb-1">Form Name</label>
+            <input
+              v-model="formName"
+              type="text"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              placeholder="Enter form name"
+            >
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm text-gray-600 mb-1">Form Description</label>
+            <textarea
+              v-model="formDescription"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              rows="3"
+              placeholder="Describe the purpose of this form"
+            ></textarea>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm text-gray-600 mb-1">Form ID</label>
+            <input
+              v-model="formId"
+              type="text"
+              class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+              placeholder="unique-form-id"
+            >
+          </div>
+          
+          <div class="mb-4">
+            <div class="flex items-center">
+              <input
+                id="isPublished"
+                v-model="isPublished"
+                type="checkbox"
+                class="mr-2"
+              >
+              <label
+                for="isPublished"
+                class="text-sm text-gray-600"
+              >Published</label>
             </div>
-            <p class="text-gray-500 text-center">
-              Select a field or section to edit its properties
-            </p>
           </div>
 
           <div class="field-picker mt-8">
@@ -384,6 +424,12 @@ import FieldTypeSelector from "../components/ui/FieldTypeSelector.vue";
 import { Control, ControlType } from "../types";
 
 const container = ref<HTMLElement | null>(null);
+
+// Form configuration
+const formName = ref("New Form");
+const formDescription = ref("");
+const formId = ref(`form-${Date.now()}`);
+const isPublished = ref(false);
 
 // Form state
 const tabs = ref<Array<{ label: string; sections: any[] }>>([
