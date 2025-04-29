@@ -1,0 +1,457 @@
+/* Improved UI for Frappe Form Builder */
+
+/* Global styles */
+:root {
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --secondary: #4f46e5;
+  --light-gray: #f3f4f6;
+  --gray: #e5e7eb;
+  --dark-gray: #9ca3af;
+  --text: #374151;
+  --danger: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --border-radius: 0.375rem;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --transition: all 0.2s ease;
+}
+
+/* Form container improvements */
+.form-builder-container {
+  background-color: #f9fafb;
+}
+
+.form-main {
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  background-color: white;
+  transition: var(--transition);
+}
+
+/* Tab improvements */
+.form-tabs-header {
+  border-bottom: 1px solid var(--gray);
+  background-color: #f8fafc;
+  border-top-left-radius: var(--border-radius);
+  border-top-right-radius: var(--border-radius);
+}
+
+.tabs-container {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.tab {
+  padding: 0.75rem 1rem;
+  border-radius: 0;
+  transition: var(--transition);
+  border-right: 1px solid var(--gray);
+  position: relative;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background-color: white;
+  border-bottom: 2px solid var(--primary);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.tab:hover:not(.active) {
+  background-color: #f1f5f9;
+}
+
+.tab-drag-handle {
+  cursor: move;
+  margin-right: 0.5rem;
+  display: flex;
+  align-items: center;
+  color: var(--dark-gray);
+}
+
+.tab-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.tab:hover .tab-actions {
+  opacity: 1;
+}
+
+.tab-edit-input {
+  background: white;
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  max-width: 150px;
+}
+
+.tab-close, .tab-edit, .tab-duplicate {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dark-gray);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.tab-close:hover, .tab-edit:hover, .tab-duplicate:hover {
+  background-color: var(--gray);
+  color: var(--text);
+}
+
+.tab-actions-right {
+  padding: 0.5rem;
+}
+
+.add-tab-button {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.add-tab-button:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Section improvements */
+.section {
+  margin-bottom: 1rem;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.section.selected {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.section-header {
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border-bottom: 1px solid var(--gray);
+  transition: var(--transition);
+}
+
+.section-header:hover {
+  background-color: #f1f5f9;
+}
+
+.section.selected .section-header {
+  background-color: rgba(124, 58, 237, 0.05);
+}
+
+.section-title {
+  font-weight: 500;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+}
+
+.section-actions button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--dark-gray);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.section-actions button:hover {
+  background-color: var(--gray);
+  color: var(--text);
+}
+
+.section-columns {
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.column {
+  flex: 1;
+  min-height: 80px;
+  border: 1px dashed var(--gray);
+  border-radius: var(--border-radius);
+  padding: 0.5rem;
+  background-color: rgba(249, 250, 251, 0.5);
+}
+
+.add-column-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  background-color: white;
+  border: 1px dashed var(--dark-gray);
+  border-radius: var(--border-radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 0.875rem;
+  min-width: 120px;
+}
+
+.add-column-button:hover {
+  background-color: #f9fafb;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Field improvements */
+.field-item {
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--gray);
+  cursor: move;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.field-item:hover {
+  border-color: var(--dark-gray);
+  box-shadow: var(--shadow);
+}
+
+.field-item.selected {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.field-actions {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.25rem;
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.field-item:hover .field-actions {
+  opacity: 1;
+}
+
+.field-actions button {
+  border: none;
+  background: #f8fafc;
+  cursor: pointer;
+  color: var(--dark-gray);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--border-radius);
+  transition: var(--transition);
+}
+
+.field-actions button:hover {
+  background-color: var(--gray);
+  color: var(--text);
+}
+
+.field-label {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text);
+  margin-bottom: 0.25rem;
+}
+
+.field-type {
+  font-size: 0.75rem;
+  color: var(--dark-gray);
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Add field button */
+.add-field-button {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: white;
+  border: 1px dashed var(--dark-gray);
+  border-radius: var(--border-radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.add-field-button:hover {
+  background-color: #f9fafb;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Field selector */
+.field-selector-container {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--gray);
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Add section button */
+.add-section-container {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.add-section-button {
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px dashed var(--dark-gray);
+  border-radius: var(--border-radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-section-button:hover {
+  background-color: #f9fafb;
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Sidebar improvements */
+.form-sidebar {
+  background-color: white;
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.empty-sidebar {
+  padding: 2rem 1rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+}
+
+.icon-container {
+  width: 48px;
+  height: 48px;
+  background-color: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.field-picker {
+  background-color: #f9fafb;
+  padding: 1rem;
+  border-radius: var(--border-radius);
+}
+
+.field-type-button {
+  padding: 0.75rem 0.5rem;
+  background-color: white;
+  border: 1px solid var(--gray);
+  border-radius: var(--border-radius);
+  color: var(--text);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.field-type-button:hover {
+  border-color: var(--primary);
+  background-color: rgba(124, 58, 237, 0.05);
+}
+
+/* Form element styling */
+.section-properties {
+  padding: 1rem;
+}
+
+input[type="text"],
+textarea,
+select {
+  border-radius: var(--border-radius);
+  border: 1px solid var(--gray);
+  padding: 0.5rem;
+  width: 100%;
+  transition: var(--transition);
+}
+
+input[type="text"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.1);
+}
+
+/* Ghost item when dragging */
+.ghost-item {
+  opacity: 0.5;
+  border: 1px dashed var(--primary) !important;
+  background-color: rgba(124, 58, 237, 0.05) !important;
+}
