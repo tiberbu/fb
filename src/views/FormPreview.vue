@@ -51,8 +51,15 @@
                   <div v-for="field in column.fields" :key="field.id" class="mb-4">
                     <component 
                       :is="getControlComponent(field.type)"
-                      :control="field"
-                      v-model="formValues[field.name]"
+                      :df="{
+                        fieldtype: field.type.charAt(0).toUpperCase() + field.type.slice(1),
+                        label: field.label,
+                        reqd: field.required,
+                        placeholder: field.placeholder,
+                        options: field.options
+                      }"
+                      :value="formValues[field.name]"
+                      @update:modelValue="(val) => formValues[field.name] = val"
                     />
                   </div>
                 </div>
@@ -81,6 +88,7 @@ import { useFormStore } from '../stores/form';
 
 // Import control components
 import TextControl from '../components/controls/TextControl.vue';
+import TextAreaControl from '../components/controls/TextAreaControl.vue';
 import NumberControl from '../components/controls/NumberControl.vue';
 import SelectControl from '../components/controls/SelectControl.vue';
 import CheckboxControl from '../components/controls/CheckboxControl.vue';
@@ -130,7 +138,8 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const getControlComponent = (type: string) => {
   const components = {
     text: TextControl,
-    textarea: TextControl,
+    textarea: TextAreaControl,
+    'text area': TextAreaControl,
     number: NumberControl,
     select: SelectControl,
     check: CheckboxControl,

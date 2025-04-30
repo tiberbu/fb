@@ -34,11 +34,27 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue';
 import FormBuilder from './FormBuilder.vue';
-import FormPreview from './FormPreview.vue';
+import FormPreview from '../components/FormPreview.vue'; // Updated import path
+
+// Define the form data structure types for better type checking
+interface FormData {
+  metadata: {
+    formName: string;
+    formDescription: string;
+    formId: string;
+    isPublished: boolean;
+    dateCreated: string;
+    lastUpdated: string;
+  };
+  tabs: Array<{
+    label: string;
+    sections: Array<any>;
+  }>;
+}
 
 // Toggle state between builder and preview
 const showPreview = ref(false);
-const formPreviewData = ref<any>(null);
+const formPreviewData = ref<FormData | null>(null);
 const formName = ref('New Form');
 const formBuilderRef = ref<InstanceType<typeof FormBuilder> | null>(null);
 
@@ -58,6 +74,7 @@ async function toggleView() {
       try {
         formPreviewData.value = JSON.parse(savedForm);
       } catch (error) {
+        // Handle error without console statements
         alert('Error loading form data');
         return; // Don't toggle if we can't load data
       }
@@ -78,10 +95,20 @@ async function toggleView() {
 }
 
 // Handle form data change from FormBuilder
-function updateFormData(data: any) {
-  formPreviewData.value = data;
-  if (data?.metadata?.formName) {
-    formName.value = data.metadata.formName;
+function updateFormData(data: FormData) {
+  // Ensure the data has the expected structure before passing to preview
+  if (data && data.metadata && data.tabs) {
+    formPreviewData.value = data;
+    
+    if (data.metadata.formName) {
+      formName.value = data.metadata.formName;
+    }
+    
+    // Save to localStorage as a backup
+    localStorage.setItem('savedFormStructure', JSON.stringify(data));
+  } else {
+    // Log warning without using console
+    alert('Received form data has unexpected structure');
   }
 }
 
@@ -96,7 +123,7 @@ onMounted(() => {
       }
       formPreviewData.value = formData;
     } catch (error) {
-      // Silent error handling
+      // Handle error without console statements
       alert('Error loading saved form data');
     }
   }

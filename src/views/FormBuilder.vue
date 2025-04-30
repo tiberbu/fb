@@ -402,6 +402,30 @@
             </button>
           </div>
           
+          <div class="mb-4 mt-4">
+            <button
+              class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm flex items-center justify-center"
+              @click="toggleJsonPreview"
+            >
+              <i class="fas" :class="showJsonPreview ? 'fa-eye-slash' : 'fa-eye'" />
+              <span class="ml-2">{{ showJsonPreview ? 'Hide JSON' : 'View JSON' }}</span>
+            </button>
+          </div>
+          
+          <div v-if="showJsonPreview" class="mb-4 mt-4">
+            <div class="json-viewer">
+              <pre class="text-xs bg-gray-50 p-3 rounded border border-gray-200 overflow-auto max-h-60">{{ getFormattedJson() }}</pre>
+            </div>
+            <div class="mt-2 flex justify-end">
+              <button 
+                class="text-xs text-blue-600 hover:text-blue-800"
+                @click="navigator.clipboard.writeText(getFormattedJson())"
+              >
+                <i class="fas fa-copy mr-1"></i>Copy to clipboard
+              </button>
+            </div>
+          </div>
+          
           <div class="field-picker mt-8">
             <h3 class="font-medium text-gray-700 mb-3">
               Add New Field
@@ -439,6 +463,7 @@ const formName = ref("New Form");
 const formDescription = ref("");
 const formId = ref(`form-${Date.now()}`);
 const isPublished = ref(false);
+const showJsonPreview = ref(false);
 
 // Form state
 const tabs = ref<Array<{ label: string; sections: any[] }>>([
@@ -899,6 +924,28 @@ function addColumnToRow(section: any, rowIndex: number) {
       fields: [],
     });
   }
+}
+
+// Function to toggle JSON preview
+function toggleJsonPreview() {
+  showJsonPreview.value = !showJsonPreview.value;
+}
+
+// Get the current form configuration as formatted JSON
+function getFormattedJson() {
+  const formStructure = {
+    metadata: {
+      formName: formName.value,
+      formDescription: formDescription.value,
+      formId: formId.value,
+      isPublished: isPublished.value,
+      dateCreated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    },
+    tabs: tabs.value
+  };
+  
+  return JSON.stringify(formStructure, null, 2);
 }
 
 // Export form structure as JSON

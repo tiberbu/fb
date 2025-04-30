@@ -1,26 +1,27 @@
 <!-- FieldControl.vue - Parent component for all field controls -->
 <template>
-  <component
+  <div>
+  
+    <component
     :is="getControlComponent()"
     :df="df"
     :value="value"
     :read-only="readOnly"
     @update:modelValue="$emit('update:modelValue', $event)"
   />
+  </div>
+  
 </template>
 
 <script setup>
 import { computed } from 'vue';
 import DataControl from './controls/DataControl.vue';
 import TextControl from './controls/TextControl.vue';
-import CheckControl from './controls/CheckControl.vue';
+import TextAreaControl from './controls/TextAreaControl.vue';
+import CheckboxControl from './controls/CheckboxControl.vue';
 import SelectControl from './controls/SelectControl.vue';
-import LinkControl from './controls/LinkControl.vue';
-import AttachControl from './controls/AttachControl.vue';
-import TableControl from './controls/TableControl.vue';
-import ButtonControl from './controls/ButtonControl.vue';
-import TextEditorControl from './controls/TextEditorControl.vue';
-import CodeControl from './controls/CodeControl.vue';
+import DateControl from './controls/DateControl.vue';
+import NumberControl from './controls/NumberControl.vue';
 
 const props = defineProps({
   df: {
@@ -43,15 +44,12 @@ const emit = defineEmits(['update:modelValue']);
 const fieldTypeMap = {
   'Data': DataControl,
   'Text': TextControl,
-  'Text Editor': TextEditorControl,
-  'Link': LinkControl,
+  'Text Area': TextAreaControl,
+  'Textarea': TextAreaControl,
   'Select': SelectControl,
-  'Check': CheckControl,
-  'Attach': AttachControl,
-  'Attach Image': AttachControl,
-  'Table': TableControl,
-  'Button': ButtonControl,
-  'Code': CodeControl,
+  'Checkbox': CheckboxControl,
+  'Date': DateControl,
+  'Number': NumberControl,
   // Default control for other field types
   'default': DataControl
 };
