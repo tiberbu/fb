@@ -2,8 +2,7 @@ import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { 
   createLayout, 
-  sectionBoilerplate,
-  scrubFieldNames
+  sectionBoilerplate
 } from '../utils/form-builder-utils';
 import type { DocField, FormState, Tab, Field } from '../types/form-builder';
 

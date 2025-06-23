@@ -53,8 +53,8 @@ export function createLayout() {
 /**
  * Scrubs field names to ensure they are valid
  */
-export function scrubFieldNames(fields) {
-  fields.forEach(field => {
+export function scrubFieldNames(fields: any[]) {
+  fields.forEach((field: any) => {
     if (field.fieldname) {
       field.fieldname = field.fieldname
         .toLowerCase()
@@ -73,7 +73,7 @@ export function scrubFieldNames(fields) {
  * @param {Object} layout - Form layout
  * @returns {Object} - The new parent
  */
-export function moveChildrenToParent(props, parentType, childType, layout) {
+export function moveChildrenToParent(props: any, parentType: any, childType: any, layout: any) {
   // Implementation depends on the specific use case
   // A simplified implementation for demonstration
   const currentParent = props[parentType];
@@ -117,11 +117,10 @@ export function moveChildrenToParent(props, parentType, childType, layout) {
  * @param {String} alternateText - Text for alternate button
  */
 export function confirmDialog(
-  title, 
-  message, 
-  onConfirm, 
-  confirmText = 'Confirm', 
-  onAlternate = null, 
+  title: string, 
+  message: string, 
+  onConfirm: () => void, 
+  onAlternate: (() => void) | null = null, 
   alternateText = 'Alternative'
 ) {
   // In a real implementation, this would show a dialog UI

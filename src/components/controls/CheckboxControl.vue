@@ -1,50 +1,93 @@
 <template>
-  <div class="checkbox-control">
-    <label>
-      <input type="checkbox" v-model="isChecked" />
-      {{ label }}
-    </label>
+  <div class="field-wrapper">
+    <div class="checkbox-wrapper">
+      <input
+        :id="df.fieldname"
+        :checked="value"
+        type="checkbox"
+        :required="df.reqd"
+        :disabled="readOnly"
+        class="checkbox-input"
+        @change="$emit('update:modelValue', $event.target.checked)"
+      >
+      <label 
+        :for="df.fieldname"
+        class="checkbox-label"
+        :class="{ 'required': df.reqd }"
+      >
+        {{ df.label }}
+      </label>
+    </div>
+    <div 
+      v-if="df.description" 
+      class="field-description"
+    >
+      {{ df.description }}
+    </div>
   </div>
 </template>
 
-<script lang="ts">
-import { defineComponent, ref } from 'vue';
-
-export default defineComponent({
-  name: 'CheckboxControl',
-  props: {
-    label: {
-      type: String,
-      required: true
-    },
-    modelValue: {
-      type: Boolean,
-      default: false
-    }
+<script setup>
+defineProps({
+  df: {
+    type: Object,
+    required: true
   },
-  setup(props, { emit }) {
-    const isChecked = ref(props.modelValue);
-
-    const updateValue = () => {
-      emit('update:modelValue', isChecked.value);
-    };
-
-    return {
-      isChecked,
-      updateValue
-    };
+  value: {
+    type: Boolean,
+    default: false
   },
-  watch: {
-    modelValue(newValue) {
-      this.isChecked = newValue;
-    }
+  readOnly: {
+    type: Boolean,
+    default: false
   }
 });
+
+defineEmits(['update:modelValue']);
 </script>
 
 <style scoped>
-.checkbox-control {
+.field-wrapper {
+  margin-bottom: 1rem;
+}
+
+.checkbox-wrapper {
   display: flex;
   align-items: center;
+}
+
+.checkbox-input {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+  accent-color: #3b82f6;
+}
+
+.checkbox-input:disabled {
+  opacity: 0.5;
+}
+
+.checkbox-label {
+  font-size: 0.875rem;
+  color: #374151;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.checkbox-label.required::after {
+  content: " *";
+  color: #dc2626;
+}
+
+.checkbox-input:disabled + .checkbox-label {
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.field-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  margin-left: 1.5rem;
 }
 </style>

@@ -9,7 +9,10 @@
         class="toggle-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center"
         @click="toggleView"
       >
-        <i :class="[showPreview ? 'fas fa-edit' : 'fas fa-eye']" class="mr-2" /> 
+        <i 
+          :class="[showPreview ? 'fas fa-edit' : 'fas fa-eye']" 
+          class="mr-2" 
+        /> 
         {{ showPreview ? 'Edit Form' : 'Preview Form' }}
       </button>
     </div>
@@ -18,12 +21,12 @@
       <!-- Show either FormBuilder or FormPreview based on state -->
       <div v-if="!showPreview">
         <FormBuilder 
-          @form-data-change="updateFormData" 
           ref="formBuilderRef"
+          @form-data-change="updateFormData" 
         />
       </div>
       <FormPreview 
-        v-else 
+        v-else-if="formPreviewData"
         :form-data="formPreviewData" 
         @back="toggleView" 
       />
@@ -68,18 +71,25 @@ watch(() => formPreviewData.value?.metadata?.formName, (newName) => {
 // Toggle between builder and preview views
 async function toggleView() {
   if (!showPreview.value) {
-    // When switching TO preview, get the form data from localStorage first
-    const savedForm = localStorage.getItem('savedFormStructure');
-    if (savedForm) {
-      try {
-        formPreviewData.value = JSON.parse(savedForm);
-      } catch (error) {
-        // Handle error without console statements
-        alert('Error loading form data');
-        return; // Don't toggle if we can't load data
+    // When switching TO preview, ensure we have the latest form data
+    // The form data should already be updated via the reactive watch
+    // But let's also check localStorage as a fallback
+    if (!formPreviewData.value) {
+      const savedForm = localStorage.getItem('savedFormStructure');
+      if (savedForm) {
+        try {
+          formPreviewData.value = JSON.parse(savedForm);
+        } catch (error) {
+          // Handle error gracefully
+          alert('Error loading form data');
+          return; // Don't toggle if we can't load data
+        }
+      } else {
+        alert('No form data available for preview');
+        return;
       }
     }
-  } 
+  }
   
   // Toggle the view state
   showPreview.value = !showPreview.value;
@@ -87,7 +97,7 @@ async function toggleView() {
   // If we're switching back to the builder, ensure it reloads properly
   if (!showPreview.value) {
     await nextTick();
-    // If the form builder exposes a reload method, call it
+    // Reload the form builder with the saved data
     if (formBuilderRef.value && typeof formBuilderRef.value.loadSavedForm === 'function') {
       formBuilderRef.value.loadSavedForm();
     }

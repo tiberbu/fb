@@ -18,6 +18,11 @@ const router = createRouter({
       path: '/preview',
       name: 'FormPreview',
       component: () => import('../views/FormPreview.vue')
+    },
+    {
+      path: '/formula-preview',
+      name: 'FormulaPreview',
+      component: () => import('../views/FormulaPreview.vue')
     }
   ]
 })

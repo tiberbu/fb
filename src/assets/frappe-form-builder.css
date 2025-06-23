@@ -1,7 +1,7 @@
 /* Frappe Form Builder CSS with Tailwind */
 
 .form-builder-container {
-  @apply flex h-full w-full;
+  @apply flex h-full w-full relative;
   margin: -15px -20px -5px;
 }
 
@@ -17,12 +17,68 @@
   @apply pointer-events-none;
 }
 
+/* Form Header */
+.form-header {
+  @apply flex justify-between items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-10;
+}
+
+.sidebar-toggle-button {
+  @apply flex items-center px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm font-medium transition-colors;
+}
+
+.sidebar-toggle-button.active {
+  @apply bg-blue-600 shadow-lg;
+}
+
+.sidebar-toggle-button.has-selection {
+  @apply bg-green-500 hover:bg-green-600;
+}
+
+.sidebar-toggle-button.has-selection.active {
+  @apply bg-green-600;
+}
+
+.selection-indicator {
+  @apply text-xs opacity-75 ml-1;
+}
+
+/* Popover Sidebar */
+.sidebar-overlay {
+  @apply fixed inset-0 bg-black bg-opacity-50 z-40;
+}
+
+.popover-sidebar {
+  @apply fixed top-0 right-0 h-full w-96 bg-white shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50;
+}
+
+.popover-sidebar.open {
+  @apply translate-x-0;
+}
+
+.sidebar-header {
+  @apply flex justify-between items-center p-4 border-b border-gray-200 bg-gray-50;
+}
+
+.sidebar-title {
+  @apply font-semibold text-gray-900;
+}
+
+.sidebar-close-button {
+  @apply p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-md transition-colors;
+}
+
+.sidebar-content {
+  @apply h-full overflow-y-auto p-4;
+  padding-bottom: 80px; /* Extra space at bottom */
+}
+
+/* Legacy styles for backward compatibility */
 .form-controls {
-  @apply w-80 relative;
+  @apply w-0 relative;
 }
 
 .form-sidebar {
-  @apply border-l border-gray-300 h-full bg-white;
+  @apply hidden;
 }
 
 /* Tabs styling */

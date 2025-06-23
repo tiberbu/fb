@@ -97,6 +97,7 @@ import {
 import { useMagicKeys, whenever } from "@vueuse/core";
 
 const props = defineProps(["tab", "section"]);
+const emit = defineEmits(['update:section', 'update:tab']);
 const store = useFormBuilderStore();
 const section = props.section;
 

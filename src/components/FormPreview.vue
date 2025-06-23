@@ -209,15 +209,27 @@ export default defineComponent({
         'textarea': 'Text Area',
         'number': 'Number',
         'date': 'Date',
+        'datetime': 'Date Time',
+        'time': 'Time',
         'checkbox': 'Checkbox',
         'check': 'Checkbox',
         'select': 'Select',
-        'data': 'Data',
-        'email': 'Data',
-        'phone': 'Data',
-        'url': 'Data',
-        'password': 'Data',
-        'radio': 'Select'
+        'radio': 'Radio',
+        'email': 'Email',
+        'phone': 'Phone',
+        'url': 'URL',
+        'password': 'Password',
+        'file': 'File',
+        'image': 'Image',
+        'range': 'Range',
+        'color': 'Color',
+        'hidden': 'Hidden',
+        'readonly': 'Read Only',
+        'divider': 'Divider',
+        'html': 'HTML',
+        'link': 'URL',
+        // Legacy support
+        'data': 'Data'
       };
       
       return typeMap[type] || 'Data';

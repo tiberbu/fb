@@ -9,7 +9,6 @@
 
 <script setup>
 import { useFormBuilderStore } from "../stores/form-builder-store";
-import { ref } from "vue";
 
 const props = defineProps({
   column: {
@@ -21,6 +20,8 @@ const props = defineProps({
     default: null
   }
 });
+
+const emit = defineEmits(['addField']);
 
 const store = useFormBuilderStore();
 
@@ -36,7 +37,13 @@ function openFieldSelector() {
     const index = props.field 
       ? props.column.fields.indexOf(props.field) + 1 
       : props.column.fields.length;
-    props.column.fields.splice(index, 0, newField);
+    
+    // Create a new array to avoid mutating props
+    const updatedFields = [...props.column.fields];
+    updatedFields.splice(index, 0, newField);
+    
+    // Emit event with the new field and position instead of mutating
+    emit('addField', { field: newField, index, updatedFields });
   }
   
   // Select the newly added field
