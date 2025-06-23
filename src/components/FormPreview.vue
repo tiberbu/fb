@@ -18,8 +18,11 @@
       v-if="formData.tabs && formData.tabs.length > 0" 
       class="form-main"
     >
-      <!-- Tabs Header - Similar to FormBuilder -->
-      <div class="form-tabs">
+      <!-- Tabs Layout (default) -->
+      <div 
+        v-if="formLayout === 'tabs' || !formLayout" 
+        class="form-tabs"
+      >
         <div class="form-tabs-header">
           <div class="tabs-container">
             <div
@@ -99,6 +102,205 @@
           </div>
         </div>
       </div>
+
+      <!-- Accordion Layout -->
+      <div 
+        v-else-if="formLayout === 'accordion'" 
+        class="form-accordion"
+      >
+        <div 
+          v-for="(tab, tabIndex) in formData.tabs" 
+          :key="tabIndex"
+          class="accordion-item"
+        >
+          <div 
+            class="accordion-header"
+            @click="toggleAccordionTab(tabIndex)"
+          >
+            <div class="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100">
+              <div class="flex items-center">
+                <div class="flex items-center justify-center w-8 h-8 bg-blue-50 rounded-lg mr-3">
+                  <i 
+                    class="fas fa-chevron-right transition-transform duration-300 text-blue-600"
+                    :class="{ 'rotate-90': activeTabIndex === tabIndex }"
+                  />
+                </div>
+                <div class="flex items-center">
+                  <i class="fas fa-folder text-blue-500 mr-2" />
+                  <span class="font-medium text-gray-800">{{ tab.label }}</span>
+                  <span class="ml-2 text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                    {{ tab.sections?.length || 0 }} sections
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            v-if="activeTabIndex === tabIndex"
+            class="accordion-content p-4 border-l border-r border-b border-gray-200 rounded-b-lg"
+          >
+            <div 
+              v-for="(section, sectionIndex) in tab.sections" 
+              :key="sectionIndex"
+              class="preview-section"
+            >
+              <div 
+                v-if="section.title"
+                class="section-header"
+              >
+                <h3>{{ section.title }}</h3>
+                <span 
+                  v-if="section.collapsible" 
+                  class="section-collapse-icon"
+                >
+                  <i class="fas fa-chevron-down" />
+                </span>
+              </div>
+              
+              <div class="section-content">
+                <div 
+                  v-for="(row, rowIndex) in section.rows" 
+                  :key="rowIndex" 
+                  class="preview-row"
+                >
+                  <div 
+                    v-for="(column, columnIndex) in row.columns" 
+                    :key="columnIndex" 
+                    class="preview-column"
+                    :class="`col-span-${12 / row.columns.length}`"
+                  >
+                    <div 
+                      v-for="field in column.fields" 
+                      :key="field.id" 
+                      class="field-wrapper"
+                    >
+                      <FieldControl
+                        :df="{
+                          fieldtype: convertFieldType(field.type),
+                          label: field.label,
+                          fieldname: field.name,
+                          reqd: field.required,
+                          placeholder: field.placeholder,
+                          options: field.options
+                        }"
+                        :value="fieldValues[field.name] || ''"
+                        @update:model-value="updateFieldValue(field.name, $event)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar Layout -->
+      <div 
+        v-else-if="formLayout === 'sidebar'" 
+        class="form-sidebar-layout flex"
+      >
+        <div class="sidebar-nav bg-gray-50 border-r border-gray-200 w-64 flex-shrink-0">
+          <div class="p-4">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+              Form Pages
+            </h3>
+            <div 
+              v-for="(tab, tabIndex) in formData.tabs" 
+              :key="tabIndex"
+              :class="[
+                'sidebar-menu-item p-3 rounded-lg cursor-pointer transition-colors',
+                activeTabIndex === tabIndex ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'
+              ]"
+              @click="activeTabIndex = tabIndex"
+            >
+              <div class="flex items-center">
+                <div class="flex items-center justify-center w-8 h-8 bg-gray-100 rounded-lg mr-3">
+                  <i class="fas fa-file-alt text-gray-600 text-sm" />
+                </div>
+                <div>
+                  <span class="font-medium">{{ tab.label }}</span>
+                  <div class="text-xs text-gray-500 mt-1">
+                    {{ tab.sections?.length || 0 }} sections
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="sidebar-content flex-1 p-6">
+          <div class="sidebar-content-header mb-6">
+            <div class="flex items-center">
+              <div class="bg-blue-100 p-2 rounded-lg mr-3">
+                <i class="fas fa-edit text-blue-600" />
+              </div>
+              <div>
+                <h2 class="text-xl font-semibold text-gray-800">
+                  {{ formData.tabs[activeTabIndex]?.label || 'Page Content' }}
+                </h2>
+                <p class="text-sm text-gray-600 mt-1">
+                  Complete the information for this page
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div 
+            v-for="(section, sectionIndex) in formData.tabs[activeTabIndex]?.sections || []" 
+            :key="sectionIndex"
+            class="preview-section"
+          >
+            <div 
+              v-if="section.title"
+              class="section-header"
+            >
+              <h3>{{ section.title }}</h3>
+              <span 
+                v-if="section.collapsible" 
+                class="section-collapse-icon"
+              >
+                <i class="fas fa-chevron-down" />
+              </span>
+            </div>
+            
+            <div class="section-content">
+              <div 
+                v-for="(row, rowIndex) in section.rows" 
+                :key="rowIndex" 
+                class="preview-row"
+              >
+                <div 
+                  v-for="(column, columnIndex) in row.columns" 
+                  :key="columnIndex" 
+                  class="preview-column"
+                  :class="`col-span-${12 / row.columns.length}`"
+                >
+                  <div 
+                    v-for="field in column.fields" 
+                    :key="field.id" 
+                    class="field-wrapper"
+                  >
+                    <FieldControl
+                      :df="{
+                        fieldtype: convertFieldType(field.type),
+                        label: field.label,
+                        fieldname: field.name,
+                        reqd: field.required,
+                        placeholder: field.placeholder,
+                        options: field.options
+                      }"
+                      :value="fieldValues[field.name] || ''"
+                      @update:model-value="updateFieldValue(field.name, $event)"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Show message if no form data -->
@@ -129,7 +331,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, PropType, ref } from 'vue';
+import { defineComponent, PropType, ref, computed } from 'vue';
 import FieldControl from './FieldControl.vue';
 
 // Define the form data structure types
@@ -169,6 +371,7 @@ interface FormMetadata {
   formName: string;
   formDescription: string;
   formId: string;
+  formLayout?: 'tabs' | 'accordion' | 'sidebar';
   isPublished: boolean;
   dateCreated: string;
   lastUpdated: string;
@@ -199,6 +402,17 @@ export default defineComponent({
   setup(props, { emit }) {
     const activeTabIndex = ref(0);
     const fieldValues = ref<Record<string, any>>({});
+
+    // Computed property for form layout
+    const formLayout = computed(() => {
+      const layout = props.formData.metadata?.formLayout || 'tabs';
+      return layout;
+    });
+
+    // Method to toggle accordion tabs
+    const toggleAccordionTab = (tabIndex: number) => {
+      activeTabIndex.value = activeTabIndex.value === tabIndex ? -1 : tabIndex;
+    };
 
     // Convert from form builder field type to control component field type
     const convertFieldType = (type: string) => {
@@ -246,6 +460,8 @@ export default defineComponent({
     return {
       activeTabIndex,
       fieldValues,
+      formLayout,
+      toggleAccordionTab,
       convertFieldType,
       updateFieldValue,
       handleSubmit,
@@ -458,5 +674,246 @@ export default defineComponent({
 
 .col-span-4 {
   width: calc(33.333% - 10.667px);
+}
+
+/* Accordion Layout Styles */
+.form-accordion {
+  padding: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.accordion-item {
+  margin-bottom: 1rem;
+}
+
+.accordion-header {
+  cursor: pointer;
+}
+
+.accordion-content {
+  background-color: #fafafa;
+  border-top: none !important;
+  border-radius: 0 0 8px 8px;
+}
+
+.rotate-90 {
+  transform: rotate(90deg);
+}
+
+/* Sidebar Layout Styles */
+.form-sidebar-layout {
+  height: 100%;
+  min-height: 500px;
+}
+
+.sidebar-nav {
+  min-height: 500px;
+}
+
+.sidebar-menu-item {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-content {
+  overflow-y: auto;
+}
+
+.sidebar-content-header {
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 1rem;
+}
+
+/* Utility classes for flex layouts */
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.flex-shrink-0 {
+  flex-shrink: 0;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.w-64 {
+  width: 16rem;
+}
+
+.w-8 {
+  width: 2rem;
+}
+
+.h-8 {
+  height: 2rem;
+}
+
+.p-4 {
+  padding: 1rem;
+}
+
+.p-3 {
+  padding: 0.75rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-6 {
+  padding: 1.5rem;
+}
+
+.mr-3 {
+  margin-right: 0.75rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
+}
+
+.ml-2 {
+  margin-left: 0.5rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mb-6 {
+  margin-bottom: 1.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.rounded-full {
+  border-radius: 9999px;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+
+.bg-blue-50 {
+  background-color: #eff6ff;
+}
+
+.bg-blue-100 {
+  background-color: #dbeafe;
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-r {
+  border-right-width: 1px;
+}
+
+.border-l {
+  border-left-width: 1px;
+}
+
+.border-b {
+  border-bottom-width: 1px;
+}
+
+.border-gray-200 {
+  border-color: #e5e7eb;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+
+.text-gray-600 {
+  color: #4b5563;
+}
+
+.text-gray-800 {
+  color: #1f2937;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+.text-blue-700 {
+  color: #1d4ed8;
+}
+
+.text-blue-500 {
+  color: #3b82f6;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+
+.font-semibold {
+  font-weight: 600;
+}
+
+.uppercase {
+  text-transform: uppercase;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.transition-colors {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.transition-transform {
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.duration-300 {
+  transition-duration: 300ms;
+}
+
+.hover\:bg-gray-100:hover {
+  background-color: #f3f4f6;
 }
 </style>

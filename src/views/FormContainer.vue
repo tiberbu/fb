@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import FormBuilder from './FormBuilder.vue';
 import FormPreview from '../components/FormPreview.vue'; // Updated import path
 
@@ -46,11 +46,13 @@ interface FormData {
     formDescription: string;
     formId: string;
     isPublished: boolean;
+    formLayout: string;
     dateCreated: string;
     lastUpdated: string;
   };
   tabs: Array<{
     label: string;
+    description?: string;
     sections: Array<any>;
   }>;
 }
@@ -72,36 +74,25 @@ watch(() => formPreviewData.value?.metadata?.formName, (newName) => {
 async function toggleView() {
   if (!showPreview.value) {
     // When switching TO preview, ensure we have the latest form data
-    // The form data should already be updated via the reactive watch
-    // But let's also check localStorage as a fallback
-    if (!formPreviewData.value) {
-      const savedForm = localStorage.getItem('savedFormStructure');
-      if (savedForm) {
-        try {
-          formPreviewData.value = JSON.parse(savedForm);
-        } catch (error) {
-          // Handle error gracefully
-          alert('Error loading form data');
-          return; // Don't toggle if we can't load data
-        }
-      } else {
-        alert('No form data available for preview');
-        return;
+    // Always ensure we have the most recent data from localStorage
+    const savedForm = localStorage.getItem('savedFormStructure');
+    if (savedForm) {
+      try {
+        const parsedData = JSON.parse(savedForm);
+        formPreviewData.value = parsedData;
+      } catch (error) {
+        // Handle error gracefully
+        alert('Error loading form data');
+        return; // Don't toggle if we can't load data
       }
+    } else if (!formPreviewData.value) {
+      alert('No form data available for preview');
+      return;
     }
   }
   
   // Toggle the view state
   showPreview.value = !showPreview.value;
-  
-  // If we're switching back to the builder, ensure it reloads properly
-  if (!showPreview.value) {
-    await nextTick();
-    // Reload the form builder with the saved data
-    if (formBuilderRef.value && typeof formBuilderRef.value.loadSavedForm === 'function') {
-      formBuilderRef.value.loadSavedForm();
-    }
-  }
 }
 
 // Handle form data change from FormBuilder
