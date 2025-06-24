@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar">
+  <div class="form-sidebar">
     <ToolboxPanel v-if="!store.form.selectedField" />
     <PropertiesPanel v-else />
   </div>
@@ -14,7 +14,7 @@ const store = useFormBuilderStore();
 </script>
 
 <style scoped>
-.sidebar {
+.form-sidebar {
   height: 100%;
   overflow-y: auto;
 }

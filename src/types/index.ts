@@ -48,6 +48,12 @@ export interface Control {
   description?: string;
   min?: number;
   max?: number;
+  step?: number;
+  rows?: number;
+  accept?: string;
+  multiple?: boolean;
+  content?: string;
+  helpText?: string;
   // CSS Styling properties
   cssClasses?: string;
   padding?: {
@@ -75,11 +81,34 @@ export interface Control {
 export interface Section {
   id: string;
   title: string;
+  subtitle?: string;
+  description?: string;
   collapsible?: boolean;
+  hideTitle?: boolean; // Hide the section title
+  hideSubtitle?: boolean; // Hide the section subtitle
   rows?: Array<any>; // Rows containing columns
   columns?: Array<any>; // Legacy support for direct columns
   formulas?: Formula[]; // Formula support for sections
   isHidden?: boolean;
+  // CSS Styling properties
+  cssClasses?: string;
+  padding?: {
+    top?: string;
+    right?: string;
+    bottom?: string;
+    left?: string;
+  };
+  margin?: {
+    top?: string;
+    right?: string;
+    bottom?: string;
+    left?: string;
+  };
+  // Legacy formula support (for backward compatibility)
+  formula?: string;
+  formulaType?: 'visibility';
+  isReadonly?: boolean;
+  dependsOn?: string[];
 }
 
 export interface Tab {

@@ -2,7 +2,7 @@ import { ref, computed, watch } from "vue";
 import { v4 as uuidv4 } from "uuid";
 import { Control, ControlType } from "../../../types";
 
-export function useFormBuilderComposable(emit: any) {
+export function useFormBuilderComposable(emit: any, formIdProp?: string) {
   // Form configuration
   const formName = ref("New Form");
   const formDescription = ref("");
@@ -40,6 +40,9 @@ export function useFormBuilderComposable(emit: any) {
   // Sidebar state
   const showSidebar = ref(false);
 
+  // Preview mode state
+  const isPreviewMode = ref(false);
+
   // Field search functionality
   const fieldSearchQuery = ref("");
 
@@ -68,8 +71,11 @@ export function useFormBuilderComposable(emit: any) {
     { type: "html", label: "HTML Content" },
   ];
 
+  const isDirty = ref(false);
+
   // Emit form data changes whenever relevant data changes
   watch([formName, formDescription, formId, isPublished, formLayout, tabs], () => {
+    isDirty.value = true;
     emitFormDataChange();
   }, { deep: true });
 
@@ -370,7 +376,7 @@ export function useFormBuilderComposable(emit: any) {
 
   function openFieldSelector(section: any, rowIndex: number, colIndex: number) {
     showFieldSelector.value = true;
-    activeSection.value = section.id;
+    activeSection.value = section?.id || null;
     activeRowIndex.value = rowIndex;
     activeColumn.value = colIndex;
   }
@@ -514,6 +520,13 @@ export function useFormBuilderComposable(emit: any) {
   }
 
   function loadSavedForm() {
+    // If we have a form ID prop, try to load from API first
+    if (formIdProp) {
+      loadFormFromAPI(formIdProp);
+      return;
+    }
+
+    // Otherwise, load from localStorage
     const savedForm = localStorage.getItem('savedFormStructure');
     if (savedForm) {
       try {
@@ -535,6 +548,45 @@ export function useFormBuilderComposable(emit: any) {
       } catch (error) {
         // Handle error silently for production
       }
+    } else {
+      // Initialize with a default section if no saved form exists
+      initializeDefaultForm();
+    }
+  }
+
+  async function loadFormFromAPI(apiFormId: string) {
+    try {
+      const api = new (await import('../../../services/FormBuilderAPI')).default();
+      const response = await api.getFormConfiguration(apiFormId);
+      
+      if (response && response.data) {
+        const formData = response.data;
+        formName.value = formData.name || 'Untitled Form';
+        formDescription.value = formData.description || '';
+        formId.value = formData._id || apiFormId;
+        isPublished.value = formData.isActive || false;
+        formLayout.value = formData.metadata?.formLayout || 'tabs';
+        
+        if (formData.tabs && Array.isArray(formData.tabs) && formData.tabs.length > 0) {
+          tabs.value = formData.tabs;
+          if (activeTab.value >= tabs.value.length) {
+            activeTab.value = 0;
+          }
+        } else {
+          // Initialize with default section if no tabs exist
+          initializeDefaultForm();
+        }
+      }
+    } catch (error) {
+      // If API fails, initialize with default form
+      initializeDefaultForm();
+    }
+  }
+
+  function initializeDefaultForm() {
+    // Ensure the first tab has at least one section
+    if (tabs.value.length > 0 && tabs.value[0].sections.length === 0) {
+      addSection();
     }
   }
 
@@ -570,6 +622,19 @@ export function useFormBuilderComposable(emit: any) {
     if (selectedControl.value?.id === id) {
       selectedControl.value = updatedControl;
     }
+    
+    emitFormDataChange();
+  }
+
+  function updateSection(updatedSection: any) {
+    const { id } = updatedSection;
+    
+    tabs.value.forEach(tab => {
+      const sectionIndex = tab.sections.findIndex((section: any) => section.id === id);
+      if (sectionIndex !== -1) {
+        tab.sections[sectionIndex] = updatedSection;
+      }
+    });
     
     emitFormDataChange();
   }
@@ -857,6 +922,59 @@ export function useFormBuilderComposable(emit: any) {
     }
   }
 
+  const isSaving = ref(false);
+
+  // Mark form as clean after successful save
+  async function saveFormToAPI() {
+    if (!formId.value) return false;
+    
+    isSaving.value = true;
+    
+    try {
+      const api = new (await import('../../../services/FormBuilderAPI')).default();
+      
+      const formData = {
+        name: formName.value,
+        description: formDescription.value,
+        isActive: isPublished.value,
+        metadata: {
+          formLayout: formLayout.value,
+          lastUpdated: new Date().toISOString(),
+          version: '1.0.0'
+        },
+        tabs: tabs.value
+      };
+
+      const response = await api.updateFormConfiguration(formId.value, formData);
+      
+      if (response && response.success) {
+        // Save successful - mark as clean
+        isDirty.value = false;
+        return true;
+      } else {
+        throw new Error('Save failed');
+      }
+    } catch (error) {
+      // Handle error silently
+      return false;
+    } finally {
+      isSaving.value = false;
+    }
+  }
+
+  // Preview mode functions
+  function togglePreviewMode() {
+    isPreviewMode.value = !isPreviewMode.value;
+    if (isPreviewMode.value) {
+      // Clear selections when entering preview mode
+      clearSelection();
+    }
+  }
+
+  function exitPreviewMode() {
+    isPreviewMode.value = false;
+  }
+
   return {
     // State
     formName,
@@ -878,8 +996,11 @@ export function useFormBuilderComposable(emit: any) {
     activeColumn,
     fileInput,
     showSidebar,
+    isPreviewMode,
     fieldSearchQuery,
     fieldTypes,
+    isSaving,
+    isDirty,
     
     // Computed
     currentTabSections,
@@ -915,7 +1036,10 @@ export function useFormBuilderComposable(emit: any) {
     editControl,
     deleteControl,
     loadSavedForm,
+    loadFormFromAPI,
+    initializeDefaultForm,
     updateControlProps,
+    updateSection,
     addColumnToRow,
     exportForm,
     handleFileImport,
@@ -928,6 +1052,9 @@ export function useFormBuilderComposable(emit: any) {
     openSectionMenu,
     deleteTab,
     getIconForFieldType,
-    getFieldTypeDescription
+    getFieldTypeDescription,
+    saveFormToAPI,
+    togglePreviewMode,
+    exitPreviewMode
   };
 }

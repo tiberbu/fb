@@ -39,15 +39,35 @@
             @click="$emit('select-section', section)"
           >
             <div class="section-title">
-              <span>{{ section.title || "Untitled Section" }}</span>
+              <div class="section-title-content">
+                <span 
+                  v-if="!section.hideTitle"
+                  class="section-title-text"
+                >
+                  {{ section.title || "Untitled Section" }}
+                </span>
+                <span 
+                  v-if="!section.hideSubtitle && section.subtitle"
+                  class="section-subtitle-text"
+                >
+                  {{ section.subtitle }}
+                </span>
+                <!-- Show placeholder when both title and subtitle are hidden -->
+                <span 
+                  v-if="section.hideTitle && (section.hideSubtitle || !section.subtitle)"
+                  class="section-placeholder-text"
+                >
+                  Hidden Section
+                </span>
+              </div>
               <i
                 v-if="section.collapsible"
                 class="fas fa-chevron-down ml-2"
               />
             </div>
             <div class="section-actions">
-              <button @click.stop="$emit('open-section-menu', section)">
-                <i class="fas fa-ellipsis-h" />
+              <button @click.stop="$emit('select-section', section)">
+                <i class="fas fa-cog" />
               </button>
             </div>
           </div>
@@ -90,7 +110,7 @@
                   
                   <draggable
                     :model-value="column.fields"
-                    @update:model-value="$emit('update-column-fields', section.id, colIndex, $event)"
+                    @update:model-value="$emit('update-column-fields', section.id, rowIndex, colIndex, $event)"
                     group="fields"
                     item-key="id"
                     ghost-class="ghost-item"
@@ -104,7 +124,7 @@
                       />
                     </template>
                     <template #footer>
-                      <div class="add-field-container relative">
+                      <div class="add-field-container">
                         <button
                           class="add-field-button"
                           @click="$emit('open-field-selector', section, rowIndex, colIndex)"
@@ -112,24 +132,6 @@
                           <i class="fas fa-plus text-xs mr-1" />
                           Add Field
                         </button>
-
-                        <div
-                          v-if="
-                            showFieldSelector &&
-                              activeSection === section.id &&
-                              activeRowIndex === rowIndex &&
-                              activeColumn === colIndex
-                          "
-                          class="field-selector-container absolute z-10 top-full left-0 right-0 mt-1"
-                        >
-                          <FieldTypeSelector
-                            @select-field-type="
-                              (type) =>
-                                $emit('add-field-to-column', section, rowIndex, colIndex, type)
-                            "
-                            @close="$emit('close-field-selector')"
-                          />
-                        </div>
                       </div>
                     </template>
                   </draggable>
@@ -175,7 +177,6 @@
 <script setup lang="ts">
 import draggable from "vuedraggable";
 import DraggableItem from "./ui/DraggableItem.vue";
-import FieldTypeSelector from "./ui/FieldTypeSelector.vue";
 
 // Props
 defineProps<{
@@ -208,3 +209,36 @@ defineEmits([
   'update-column-fields'
 ]);
 </script>
+
+<style scoped>
+.section-title-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title-text {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.section-subtitle-text {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.section-placeholder-text {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* Ensure proper spacing and layout */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>

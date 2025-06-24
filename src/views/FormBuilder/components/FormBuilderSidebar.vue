@@ -2,28 +2,78 @@
   <!-- Popover Sidebar Overlay -->
   <div
     v-if="showSidebar"
-    class="sidebar-overlay"
+    class="form-builder-sidebar-overlay"
     @click="$emit('close-sidebar')"
   />
 
   <!-- Popover Sidebar -->
   <div
-    class="popover-sidebar"
+    class="form-builder-popover-sidebar"
     :class="{ 'open': showSidebar }"
     @click.stop
   >
-    <div class="sidebar-header">
-      <h3 class="sidebar-title">
+    <div class="form-builder-sidebar-header">
+      <h3 class="form-builder-sidebar-title">
         Properties
       </h3>
       <button
-        class="sidebar-close-button"
+        class="form-builder-sidebar-close-button"
         @click="$emit('close-sidebar')"
       >
         <i class="fas fa-times" />
       </button>
     </div>
-    <div class="sidebar-content">
+    
+    <!-- Form Management Actions -->
+    <div class="form-actions-section">
+      <div class="form-actions-header">
+        <h4>Form Actions</h4>
+      </div>
+      <div class="form-actions-buttons">
+        <button 
+          class="btn btn-primary btn-sm" 
+          title="Save Changes"
+          :disabled="isSaving || !isDirty"
+          @click="$emit('save-form')"
+        >
+          <i 
+            :class="isSaving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"
+          />
+          {{ isSaving ? 'Saving...' : (isDirty ? 'Save Changes' : 'Saved') }}
+          <span 
+            v-if="isDirty && !isSaving" 
+            class="unsaved-indicator"
+          >*</span>
+        </button>
+        
+        <button 
+          class="btn btn-outline btn-sm" 
+          title="Export Form"
+          @click="$emit('export-form')"
+        >
+          <i class="fas fa-download" />
+          Export
+        </button>
+        
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          style="display: none"
+          @change="$emit('handle-file-import', $event)"
+        >
+        <button 
+          class="btn btn-outline btn-sm" 
+          title="Import Form"
+          @click="triggerFileInput"
+        >
+          <i class="fas fa-upload" />
+          Import
+        </button>
+      </div>
+    </div>
+    
+    <div class="form-builder-sidebar-content">
       <!-- Tab Properties -->
       <FormBuilderTabProperties
         v-if="selectedTab !== null"
@@ -48,6 +98,9 @@
       <FormBuilderSectionProperties
         v-else-if="selectedSection"
         :section-id="selectedSection"
+        :section="getSectionByIdLocal(selectedSection)"
+        :available-fields="getAllFields()"
+        @update-section="$emit('update-section', $event)"
         @delete-section="$emit('delete-section', $event)"
         @get-section-by-id="$emit('get-section-by-id', $event)"
       />
@@ -98,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
 import { Control } from "../../../types";
 import FormBuilderControlProperties from "./sidebar/FormBuilderControlProperties.vue";
 import FormBuilderSectionProperties from "./sidebar/FormBuilderSectionProperties.vue";
@@ -105,6 +159,12 @@ import FormBuilderColumnProperties from "./sidebar/FormBuilderColumnProperties.v
 import FormBuilderRowProperties from "./sidebar/FormBuilderRowProperties.vue";
 import FormBuilderFormConfiguration from "./sidebar/FormBuilderFormConfiguration.vue";
 import FormBuilderTabProperties from "./sidebar/FormBuilderTabProperties.vue";
+
+const fileInput = ref<HTMLInputElement | null>(null);
+
+const triggerFileInput = () => {
+  fileInput.value?.click();
+};
 
 interface Props {
   showSidebar: boolean;
@@ -121,6 +181,8 @@ interface Props {
   formLayout: string;
   fieldSearchQuery: string;
   filteredFieldTypes: Array<{ type: string; label: string }>;
+  isSaving: boolean;
+  isDirty: boolean;
 }
 
 const props = defineProps<Props>();
@@ -130,10 +192,50 @@ function getTabByIndex(index: number) {
   return props.tabs[index] || null;
 }
 
+// Helper function to get section by ID
+function getSectionByIdLocal(sectionId: string) {
+  for (const tab of props.tabs) {
+    const section = tab.sections.find((s: any) => s.id === sectionId);
+    if (section) {
+      return section;
+    }
+  }
+  return null;
+}
+
+// Helper function to get all fields across all tabs and sections
+function getAllFields(): Control[] {
+  const fields: Control[] = [];
+  
+  props.tabs.forEach(tab => {
+    tab.sections?.forEach((section: any) => {
+      if (section.rows) {
+        section.rows.forEach((row: any) => {
+          row.columns?.forEach((column: any) => {
+            if (column.fields) {
+              fields.push(...column.fields);
+            }
+          });
+        });
+      } else if (section.columns) {
+        // For backward compatibility
+        section.columns.forEach((column: any) => {
+          if (column.fields) {
+            fields.push(...column.fields);
+          }
+        });
+      }
+    });
+  });
+  
+  return fields;
+}
+
 defineEmits<{
   'close-sidebar': [];
   'update-control': [control: Control];
   'delete-control': [id: string];
+  'update-section': [section: any];
   'delete-section': [sectionId: string];
   'delete-column': [sectionId: string, columnIndex: number];
   'delete-row': [sectionId: string, rowIndex: number];
@@ -148,6 +250,7 @@ defineEmits<{
   'update:form-layout': [value: string];
   'update:field-search-query': [value: string];
   'export-form': [];
+  'save-form': [];
   'handle-file-import': [event: Event];
   'open-formula-preview': [];
   'copy-to-clipboard': [];

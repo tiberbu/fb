@@ -1,7 +1,7 @@
 <template>
   <div class="form-sidebar-layout">
-    <div class="sidebar-nav">
-      <div class="sidebar-header">
+    <div class="form-builder-sidebar-nav">
+      <div class="form-builder-sidebar-header">
         <button
           class="add-tab-button w-full text-white px-4 py-3 rounded-lg text-sm font-medium transition-all duration-300"
           @click="$emit('add-tab')"
@@ -61,8 +61,8 @@
       </div>
     </div>
     
-    <div class="sidebar-content">
-      <div class="sidebar-content-header">
+    <div class="form-builder-sidebar-content">
+      <div class="form-builder-sidebar-content-header">
         <div class="flex items-center justify-between">
           <div class="flex items-center">
             <div class="bg-blue-100 p-2 rounded-lg mr-3">
@@ -97,18 +97,18 @@
           @add-section="$emit('add-section')"
           @select-section="$emit('select-section', $event)"
           @open-section-menu="$emit('open-section-menu', $event)"
-          @select-row="$emit('select-row', { sectionId: $event.sectionId, rowIndex: $event.rowIndex })"
-          @delete-row="$emit('delete-row', { sectionId: $event.sectionId, rowIndex: $event.rowIndex })"
-          @select-column="$emit('select-column', { sectionId: $event.sectionId, columnIndex: $event.columnIndex })"
+          @select-row="(sectionId, rowIndex) => $emit('select-row', { sectionId, rowIndex })"
+          @delete-row="(sectionId, rowIndex) => $emit('delete-row', { sectionId, rowIndex })"
+          @select-column="(sectionId, columnIndex) => $emit('select-column', { sectionId, columnIndex })"
           @edit-control="$emit('edit-control', $event)"
           @delete-control="$emit('delete-control', $event)"
-          @open-field-selector="$emit('open-field-selector', { section: $event.section, rowIndex: $event.rowIndex, colIndex: $event.colIndex })"
-          @add-field-to-column="$emit('add-field-to-column', { section: $event.section, rowIndex: $event.rowIndex, columnIndex: $event.columnIndex, type: $event.type })"
+          @open-field-selector="(section, rowIndex, colIndex) => $emit('open-field-selector', { section, rowIndex, colIndex })"
+          @add-field-to-column="(section, rowIndex, colIndex, type) => $emit('add-field-to-column', { section, rowIndex, columnIndex: colIndex, type })"
           @close-field-selector="$emit('close-field-selector')"
-          @add-column-to-row="$emit('add-column-to-row', { section: $event.section, rowIndex: $event.rowIndex })"
+          @add-column-to-row="(section, rowIndex) => $emit('add-column-to-row', { section, rowIndex })"
           @add-row-to-section="$emit('add-row-to-section', $event)"
           @update-sections="$emit('update-sections', $event)"
-          @update-column-fields="$emit('update-column-fields', { sectionId: $event.sectionId, rowIndex: $event.rowIndex, columnIndex: $event.columnIndex, fields: $event.fields })"
+          @update-column-fields="(sectionId, rowIndex, columnIndex, fields) => $emit('update-column-fields', { sectionId, rowIndex, columnIndex, fields })"
         />
       </div>
     </div>

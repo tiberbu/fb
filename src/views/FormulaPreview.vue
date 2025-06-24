@@ -42,8 +42,9 @@
             <div v-if="activeTab" class="tab-content">
               <!-- Sections -->
               <div v-for="section in visibleSections" :key="section.id" class="section mb-8">
-                <div class="section-header mb-4 pb-2 border-b" v-if="section.title">
-                  <h3 class="text-lg font-medium text-gray-700">{{ section.title }}</h3>
+                <div v-if="(!section.hideTitle && section.title) || (!section.hideSubtitle && section.subtitle)" class="section-header mb-4 pb-2 border-b">
+                  <h3 v-if="!section.hideTitle && section.title" class="text-lg font-medium text-gray-700">{{ section.title }}</h3>
+                  <p v-if="!section.hideSubtitle && section.subtitle" class="text-sm text-gray-600 mt-1">{{ section.subtitle }}</p>
                 </div>
                 
                 <!-- Fields in this section -->

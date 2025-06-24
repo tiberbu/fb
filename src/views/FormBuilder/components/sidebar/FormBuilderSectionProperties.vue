@@ -1,42 +1,67 @@
 <template>
   <div class="section-properties">
-    <h3 class="font-medium text-gray-700 mb-3">
-      Section Properties
-    </h3>
-    <div class="mb-4">
-      <p class="text-sm text-gray-600">
-        Section: "{{ sectionTitle || 'Untitled Section' }}"
-      </p>
-    </div>
-    <div class="mb-4">
-      <button
-        class="delete-section-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-        @click="$emit('delete-section', sectionId)"
-      >
-        <i class="fas fa-trash-alt mr-2" />Delete Section
-      </button>
-    </div>
+    <SectionPropertiesPanel
+      :section="section"
+      :available-fields="availableFields"
+      @update="$emit('update-section', $event)"
+      @delete="$emit('delete-section', $event)"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from "vue";
+import { Section, Control } from "../../../../types";
+import SectionPropertiesPanel from "../../../../components/ui/SectionPropertiesPanel.vue";
 
 interface Props {
   sectionId: string;
+  section?: Section;
+  availableFields?: Control[];
 }
 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
+defineEmits<{
   'delete-section': [sectionId: string];
+  'update-section': [section: Section];
   'get-section-by-id': [id: string];
 }>();
 
-// Get section title (this would need to be connected to the actual section data)
-const sectionTitle = computed(() => {
-  // This would need to be implemented to get the actual section title
-  // For now, return a placeholder
-  return 'Section Title';
+// Create a default section if none provided
+const section = computed(() => {
+  if (props.section) {
+    return props.section;
+  }
+  
+  // Return a default section structure
+  return {
+    id: props.sectionId,
+    title: 'Untitled Section',
+    subtitle: '',
+    description: '',
+    collapsible: false,
+    rows: [],
+    columns: [],
+    formulas: [],
+    isHidden: false,
+    cssClasses: '',
+    padding: {
+      top: '',
+      right: '',
+      bottom: '',
+      left: ''
+    },
+    margin: {
+      top: '',
+      right: '',
+      bottom: '',
+      left: ''
+    }
+  } as Section;
+});
+
+const availableFields = computed(() => {
+  return props.availableFields || [];
 });
 </script>

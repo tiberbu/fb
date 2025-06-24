@@ -5,16 +5,26 @@
       <h1 class="text-xl font-semibold text-gray-800">
         {{ formName }}
       </h1>
-      <button 
-        class="toggle-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center"
-        @click="toggleView"
-      >
-        <i 
-          :class="[showPreview ? 'fas fa-edit' : 'fas fa-eye']" 
-          class="mr-2" 
-        /> 
-        {{ showPreview ? 'Edit Form' : 'Preview Form' }}
-      </button>
+      <div class="flex items-center gap-2">
+        <button 
+          v-if="showPreview"
+          class="print-button bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm flex items-center"
+          @click="printForm"
+        >
+          <i class="fas fa-print mr-2" />
+          Print Form
+        </button>
+        <button 
+          class="toggle-button bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm flex items-center"
+          @click="toggleView"
+        >
+          <i 
+            :class="[showPreview ? 'fas fa-edit' : 'fas fa-eye']" 
+            class="mr-2" 
+          /> 
+          {{ showPreview ? 'Edit Form' : 'Preview Form' }}
+        </button>
+      </div>
     </div>
 
     <div class="view-container mt-4">
@@ -37,7 +47,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
 import FormBuilder from './FormBuilder.vue';
-import FormPreview from '../components/FormPreview.vue'; // Updated import path
+import FormPreview from './FormPreview.vue';
 
 // Define the form data structure types for better type checking
 interface FormData {
@@ -111,6 +121,11 @@ function updateFormData(data: FormData) {
     // Log warning without using console
     alert('Received form data has unexpected structure');
   }
+}
+
+// Print form function
+function printForm() {
+  window.print();
 }
 
 // On mount, check if there's saved form data to update the form name

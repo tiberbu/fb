@@ -16,9 +16,9 @@
         </button>
         <button
           class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          @click="$emit('back')"
+          @click="goBackToBuilder"
         >
-          Back to Editor
+          <i class="fas fa-arrow-left mr-1" /> Back to Builder
         </button>
       </div>
     </div>
@@ -63,17 +63,11 @@
                       :style="getFieldStyles(field)"
                       v-show="!isFieldHidden(field.id)"
                     >
-                      <component 
-                        :is="getControlComponent(field.type)"
-                        :df="{
-                          fieldtype: field.type.charAt(0).toUpperCase() + field.type.slice(1),
-                          label: field.label,
-                          reqd: isFieldRequired(field),
-                          placeholder: field.placeholder,
-                          options: field.options,
-                          readOnly: isFieldReadOnly(field)
-                        }"
-                        :value="getFieldValue(field)"
+                      <FormControl
+                        :control="field"
+                        :model-value="getFieldValue(field)"
+                        :is-required="isFieldRequired(field)"
+                        :is-read-only="isFieldReadOnly(field)"
                         @update:model-value="updateFieldValue(field, $event)"
                       />
                     </div>
@@ -98,33 +92,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineProps, defineEmits, watch } from 'vue';
+import { ref, computed, onMounted, defineProps, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { useFormStore } from '../stores/form';
 import { evaluateFormula } from '../utils/formula-evaluator';
-import type { Control, Formula } from '../types';
+import type { Formula } from '../types';
 
-// Import control components
-import TextControl from '../components/controls/TextControl.vue';
-import TextAreaControl from '../components/controls/TextAreaControl.vue';
-import NumberControl from '../components/controls/NumberControl.vue';
-import SelectControl from '../components/controls/SelectControl.vue';
-import CheckboxControl from '../components/controls/CheckboxControl.vue';
-import DateControl from '../components/controls/DateControl.vue';
-
-// Define metadata interface
-interface FormMetadata {
-  formName: string;
-  formDescription: string;
-  formId: string;
-  isPublished: boolean;
-  dateCreated: string;
-  lastUpdated: string;
-}
+// Import the unified form control component
+import FormControl from '../components/FormControl.vue';
 
 const router = useRouter();
-const props = defineProps<{ formData?: any }>();
-const emit = defineEmits(['back']);
+const props = defineProps<{ 
+  formData?: any;
+  id?: string;
+}>();
+
+// Navigation function
+function goBackToBuilder() {
+  if (props.id) {
+    router.push(`/builder/${props.id}`);
+  } else {
+    router.push('/forms');
+  }
+}
 
 // Form values and state
 const formValues = ref<Record<string, any>>({});
@@ -164,31 +153,8 @@ watch(() => props.formData, (newData) => {
   }
 }, { immediate: true });
 
-// Component mapping for different field types
-const getControlComponent = (type: string) => {
-  const components: Record<string, any> = {
-    text: TextControl,
-    textarea: TextAreaControl,
-    'text area': TextAreaControl,
-    number: NumberControl,
-    select: SelectControl,
-    check: CheckboxControl,
-    checkbox: CheckboxControl,
-    date: DateControl,
-    file: TextControl,
-    link: TextControl
-  };
-  
-  return components[type] || TextControl;
-};
-
 // Form value handling functions
 function getFieldValue(field: any) {
-  // For calculated fields, get the value from calculation
-  const hasCalculation = field.formulas && field.formulas.some((f: Formula) => 
-    f.type === 'calculation' && f.enabled
-  );
-  
   // Return calculated value or stored value
   return formValues.value[field.name] !== undefined 
     ? formValues.value[field.name] 
