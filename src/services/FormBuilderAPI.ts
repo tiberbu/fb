@@ -2,7 +2,7 @@
 class FormBuilderAPI {
   private baseURL: string;
 
-  constructor(baseURL: string = 'http://localhost:3001/api') {
+  constructor(baseURL: string = '/api') {
     this.baseURL = baseURL;
   }
 

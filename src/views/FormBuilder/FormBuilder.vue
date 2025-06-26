@@ -18,7 +18,7 @@
       
       <div class="action-buttons">
         <button 
-          class="action-btn" 
+          class="action-btn btn-sm" 
           :title="isPreviewMode ? 'Back to Builder' : 'Preview Form'"
           @click="previewForm"
         >
@@ -27,7 +27,7 @@
         </button>
         
         <button 
-          class="action-btn" 
+          class="action-btn btn-sm" 
           title="Export as JSON"
           @click="exportForm"
         >
@@ -36,7 +36,7 @@
         </button>
         
         <button 
-          class="action-btn primary" 
+          class="action-btn primary btn-sm" 
           title="Save Changes"
           :disabled="isSaving || !isDirty"
           @click="saveFormToAPI"
@@ -55,8 +55,8 @@
         <!-- Preview Mode -->
         <div v-if="isPreviewMode" class="preview-mode">
           <FormPreview
+            :id="props.id"
             :form-data="getFormData()"
-            @back="togglePreviewMode"
           />
         </div>
 
@@ -182,7 +182,7 @@ import FormBuilderHeader from "./components/FormBuilderHeader.vue";
 import FormBuilderLayouts from "./components/FormBuilderLayouts.vue";
 import FormBuilderSidebar from "./components/FormBuilderSidebar.vue";
 import FieldSelectorSidebar from "../../components/ui/FieldSelectorSidebar.vue";
-import FormPreview from "../../components/FormPreview_backup.vue";
+import FormPreview from "../FormPreview.vue";
 import { useFormBuilderComposable } from "./composables/useFormBuilderComposable";
 
 const props = defineProps<{

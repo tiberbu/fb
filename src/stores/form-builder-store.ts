@@ -4,6 +4,8 @@ import {
   createLayout, 
   sectionBoilerplate
 } from '../utils/form-builder-utils';
+import { isLocalId } from '../utils/id-utils';
+import { toast } from '../composables/useToast';
 import type { DocField, FormState, Tab, Field } from '../types/form-builder';
 import FormBuilderAPI from '../services/FormBuilderAPI';
 
@@ -126,11 +128,28 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
       };
 
       const result = await api.saveFormConfiguration(formData);
-      currentFormId.value = result._id;
-      formName.value = name;
-      formDescription.value = description;
-      dirty.value = false;
-      return result;
+      
+      if (result && result.data && result.data._id) {
+        currentFormId.value = result.data._id;
+        formName.value = name;
+        formDescription.value = description;
+        dirty.value = false;
+        
+        // Show success toast
+        toast.success('Form Saved', 'Form configuration saved successfully');
+        
+        return result.data;
+      } else {
+        throw new Error('Invalid response from server - missing form ID');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Show error toast
+      toast.error('Save Failed', `Failed to save form: ${errorMessage}`);
+      
+      console.error('Error saving form configuration:', error);
+      throw error;
     } finally {
       isSaving.value = false;
     }
@@ -139,6 +158,14 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
   async function updateFormConfiguration(): Promise<any> {
     if (!currentFormId.value) {
       throw new Error('No form ID available for update');
+    }
+
+    // Check if this is a local ID (fallback from failed creation)
+    // MongoDB ObjectIds are 24 character hex strings
+    if (isLocalId(currentFormId.value)) {
+      // This is a local ID, we need to create a new form instead of updating
+      toast.info('Creating New Form', 'Converting local form to database record');
+      return await saveFormConfiguration(formName.value, formDescription.value);
     }
 
     isSaving.value = true;
@@ -152,7 +179,18 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
 
       const result = await api.updateFormConfiguration(currentFormId.value, formData);
       dirty.value = false;
+      
+      // Show success toast
+      toast.success('Form Updated', 'Form configuration updated successfully');
+      
       return result;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      
+      // Show error toast
+      toast.error('Update Failed', `Failed to update form: ${errorMessage}`);
+      
+      throw error;
     } finally {
       isSaving.value = false;
     }

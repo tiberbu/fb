@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Builder Server Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .form-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .form-item {
+            background: #f8f9fa;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .submission-item {
+            background: #e8f5e8;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 4px solid #28a745;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Form Builder Server Demo</h1>
+    
+    <!-- Form Configuration Section -->
+    <div class="container">
+        <h2>📝 Create Form Configuration</h2>
+        <form id="createFormConfig">
+            <div class="form-group">
+                <label for="formName">Form Name:</label>
+                <input type="text" id="formName" name="formName" required 
+                       placeholder="e.g., Customer Feedback Form">
+            </div>
+            <div class="form-group">
+                <label for="formDescription">Description:</label>
+                <textarea id="formDescription" name="formDescription" 
+                         placeholder="Brief description of the form"></textarea>
+            </div>
+            <button type="submit">Create Form</button>
+        </form>
+        <div id="formConfigResult"></div>
+    </div>
+
+    <!-- Available Forms Section -->
+    <div class="container">
+        <h2>📋 Available Forms</h2>
+        <button onclick="loadForms()">Refresh Forms List</button>
+        <ul id="formsList" class="form-list"></ul>
+    </div>
+
+    <!-- Form Submission Section -->
+    <div class="container">
+        <h2>📤 Submit Form Data</h2>
+        <div class="form-group">
+            <label for="selectForm">Select Form:</label>
+            <select id="selectForm">
+                <option value="">Select a form...</option>
+            </select>
+        </div>
+        <div id="dynamicFormFields"></div>
+        <button onclick="submitFormData()" id="submitBtn" disabled>Submit Form Data</button>
+        <div id="submissionResult"></div>
+    </div>
+
+    <!-- Submissions View Section -->
+    <div class="container">
+        <h2>📊 Form Submissions</h2>
+        <button onclick="loadSubmissions()">Load Recent Submissions</button>
+        <div id="submissionsList"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3001/api';
+        let availableForms = [];
+
+        // Load forms on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadForms();
+        });
+
+        // Create form configuration
+        document.getElementById('createFormConfig').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formName = document.getElementById('formName').value;
+            const formDescription = document.getElementById('formDescription').value;
+            
+            // Create a simple form configuration
+            const configuration = {
+                tabs: [{
+                    id: 'tab1',
+                    title: formName,
+                    sections: [{
+                        id: 'section1',
+                        title: 'Form Fields',
+                        rows: [{
+                            columns: [{
+                                fields: [{
+                                    id: 'sample_field',
+                                    type: 'text',
+                                    label: 'Sample Text Field',
+                                    required: true,
+                                    placeholder: 'Enter some text...'
+                                }]
+                            }]
+                        }, {
+                            columns: [{
+                                fields: [{
+                                    id: 'email_field',
+                                    type: 'email',
+                                    label: 'Email Address',
+                                    required: true,
+                                    placeholder: 'your@email.com'
+                                }]
+                            }]
+                        }, {
+                            columns: [{
+                                fields: [{
+                                    id: 'message_field',
+                                    type: 'textarea',
+                                    label: 'Message',
+                                    required: false,
+                                    placeholder: 'Your message here...'
+                                }]
+                            }]
+                        }]
+                    }]
+                }]
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/form-configurations`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: formName,
+                        description: formDescription,
+                        configuration: configuration,
+                        createdBy: 'demo-user'
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('formConfigResult').innerHTML = 
+                        `<div class="success">✅ Form created successfully! ID: ${result.data._id}</div>`;
+                    loadForms(); // Refresh the forms list
+                    this.reset(); // Clear the form
+                } else {
+                    document.getElementById('formConfigResult').innerHTML = 
+                        `<div class="error">❌ Error: ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('formConfigResult').innerHTML = 
+                    `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        });
+
+        // Load available forms
+        async function loadForms() {
+            try {
+                const response = await fetch(`${API_BASE}/form-configurations?isActive=true`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    availableForms = result.data;
+                    displayForms(result.data);
+                    populateFormSelector(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading forms:', error);
+            }
+        }
+
+        // Display forms list
+        function displayForms(forms) {
+            const formsList = document.getElementById('formsList');
+            
+            if (forms.length === 0) {
+                formsList.innerHTML = '<li>No forms available. Create a form first!</li>';
+                return;
+            }
+
+            formsList.innerHTML = forms.map(form => `
+                <li class="form-item">
+                    <strong>${form.name}</strong><br>
+                    <small>ID: ${form._id}</small><br>
+                    <small>Description: ${form.description || 'No description'}</small><br>
+                    <small>Created: ${new Date(form.createdAt).toLocaleDateString()}</small>
+                </li>
+            `).join('');
+        }
+
+        // Populate form selector
+        function populateFormSelector(forms) {
+            const selectForm = document.getElementById('selectForm');
+            selectForm.innerHTML = '<option value="">Select a form...</option>';
+            
+            forms.forEach(form => {
+                const option = document.createElement('option');
+                option.value = form._id;
+                option.textContent = form.name;
+                selectForm.appendChild(option);
+            });
+        }
+
+        // Handle form selection
+        document.getElementById('selectForm').addEventListener('change', function() {
+            const formId = this.value;
+            const submitBtn = document.getElementById('submitBtn');
+            const dynamicFields = document.getElementById('dynamicFormFields');
+            
+            if (formId) {
+                const selectedForm = availableForms.find(form => form._id === formId);
+                if (selectedForm) {
+                    createDynamicFields(selectedForm.configuration);
+                    submitBtn.disabled = false;
+                } else {
+                    dynamicFields.innerHTML = '';
+                    submitBtn.disabled = true;
+                }
+            } else {
+                dynamicFields.innerHTML = '';
+                submitBtn.disabled = true;
+            }
+        });
+
+        // Create dynamic form fields based on configuration
+        function createDynamicFields(configuration) {
+            const container = document.getElementById('dynamicFormFields');
+            let fieldsHTML = '<h3>Fill the form:</h3>';
+            
+            if (configuration.tabs && configuration.tabs[0] && configuration.tabs[0].sections) {
+                const section = configuration.tabs[0].sections[0];
+                if (section.rows) {
+                    section.rows.forEach(row => {
+                        row.columns.forEach(column => {
+                            column.fields.forEach(field => {
+                                fieldsHTML += `
+                                    <div class="form-group">
+                                        <label for="${field.id}">${field.label}${field.required ? ' *' : ''}:</label>
+                                        ${createFieldInput(field)}
+                                    </div>
+                                `;
+                            });
+                        });
+                    });
+                }
+            }
+            
+            container.innerHTML = fieldsHTML;
+        }
+
+        // Create input field based on field type
+        function createFieldInput(field) {
+            switch (field.type) {
+                case 'textarea':
+                    return `<textarea id="${field.id}" name="${field.id}" 
+                           placeholder="${field.placeholder || ''}" 
+                           ${field.required ? 'required' : ''}></textarea>`;
+                case 'email':
+                    return `<input type="email" id="${field.id}" name="${field.id}" 
+                           placeholder="${field.placeholder || ''}" 
+                           ${field.required ? 'required' : ''}>`;
+                default:
+                    return `<input type="text" id="${field.id}" name="${field.id}" 
+                           placeholder="${field.placeholder || ''}" 
+                           ${field.required ? 'required' : ''}>`;
+            }
+        }
+
+        // Submit form data
+        async function submitFormData() {
+            const formId = document.getElementById('selectForm').value;
+            if (!formId) return;
+
+            const selectedForm = availableForms.find(form => form._id === formId);
+            if (!selectedForm) return;
+
+            // Collect form data
+            const submissionData = {};
+            const section = selectedForm.configuration.tabs[0].sections[0];
+            
+            section.rows.forEach(row => {
+                row.columns.forEach(column => {
+                    column.fields.forEach(field => {
+                        const element = document.getElementById(field.id);
+                        if (element) {
+                            submissionData[field.id] = element.value;
+                        }
+                    });
+                });
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/form-submissions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        formConfigurationId: formId,
+                        submissionData: submissionData,
+                        submittedBy: 'demo-user',
+                        metadata: {
+                            source: 'demo-html-page',
+                            timestamp: new Date().toISOString()
+                        }
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('submissionResult').innerHTML = 
+                        `<div class="success">✅ Form submitted successfully! Submission ID: ${result.data.submissionId}</div>
+                         <pre>${JSON.stringify(result.data, null, 2)}</pre>`;
+                    
+                    // Clear form
+                    section.rows.forEach(row => {
+                        row.columns.forEach(column => {
+                            column.fields.forEach(field => {
+                                const element = document.getElementById(field.id);
+                                if (element) element.value = '';
+                            });
+                        });
+                    });
+                } else {
+                    document.getElementById('submissionResult').innerHTML = 
+                        `<div class="error">❌ Error: ${result.message}</div>`;
+                }
+            } catch (error) {
+                document.getElementById('submissionResult').innerHTML = 
+                    `<div class="error">❌ Network error: ${error.message}</div>`;
+            }
+        }
+
+        // Load recent submissions
+        async function loadSubmissions() {
+            try {
+                const response = await fetch(`${API_BASE}/form-submissions?limit=10`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    displaySubmissions(result.data);
+                }
+            } catch (error) {
+                console.error('Error loading submissions:', error);
+            }
+        }
+
+        // Display submissions
+        function displaySubmissions(submissions) {
+            const container = document.getElementById('submissionsList');
+            
+            if (submissions.length === 0) {
+                container.innerHTML = '<p>No submissions found.</p>';
+                return;
+            }
+
+            container.innerHTML = submissions.map(submission => `
+                <div class="submission-item">
+                    <strong>Form:</strong> ${submission.formName}<br>
+                    <strong>Submitted by:</strong> ${submission.submittedBy}<br>
+                    <strong>Status:</strong> ${submission.status}<br>
+                    <strong>Date:</strong> ${new Date(submission.createdAt).toLocaleString()}<br>
+                    <details>
+                        <summary>View Data</summary>
+                        <pre>${JSON.stringify(submission.submissionData, null, 2)}</pre>
+                    </details>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

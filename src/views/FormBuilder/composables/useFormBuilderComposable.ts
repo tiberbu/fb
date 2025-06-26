@@ -1,6 +1,8 @@
 import { ref, computed, watch } from "vue";
 import { v4 as uuidv4 } from "uuid";
 import { Control, ControlType } from "../../../types";
+import { isLocalId } from "../../../utils/id-utils";
+import { toast } from "../../../composables/useToast";
 
 export function useFormBuilderComposable(emit: any, formIdProp?: string) {
   // Form configuration
@@ -945,17 +947,70 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
         tabs: tabs.value
       };
 
-      const response = await api.updateFormConfiguration(formId.value, formData);
+      let response;
       
-      if (response && response.success) {
+      // Check if this is a local ID (needs to be created, not updated)
+      if (isLocalId(formId.value)) {
+        // Create new form instead of updating
+        const createData = {
+          name: formName.value,
+          description: formDescription.value,
+          configuration: {
+            isActive: isPublished.value,
+            metadata: {
+              formLayout: formLayout.value,
+              lastUpdated: new Date().toISOString(),
+              version: '1.0.0'
+            },
+            tabs: tabs.value
+          },
+          createdBy: 'form-builder-user'
+        };
+        
+        response = await api.saveFormConfiguration(createData);
+        
+        // Update the local formId with the real database ID
+        if (response && response.data && response.data._id) {
+          formId.value = response.data._id;
+        }
+      } else {
+        // Update existing form
+        response = await api.updateFormConfiguration(formId.value, {
+          name: formName.value,
+          description: formDescription.value,
+          configuration: {
+            isActive: isPublished.value,
+            metadata: {
+              formLayout: formLayout.value,
+              lastUpdated: new Date().toISOString(),
+              version: '1.0.0'
+            },
+            tabs: tabs.value
+          },
+          updatedBy: 'form-builder-user'
+        });
+      }
+      
+      if (response && (response.success || response.data)) {
         // Save successful - mark as clean
         isDirty.value = false;
+        
+        // Show success toast
+        if (isLocalId(formId.value)) {
+          toast.success('Form Created', 'Form saved to database successfully');
+        } else {
+          toast.success('Form Saved', 'Form updated successfully');
+        }
+        
         return true;
       } else {
         throw new Error('Save failed');
       }
     } catch (error) {
-      // Handle error silently
+      // Show error toast
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      toast.error('Save Failed', `Failed to save form: ${errorMessage}`);
+      
       return false;
     } finally {
       isSaving.value = false;

@@ -20,7 +20,7 @@
         </select>
         
         <button 
-          class="btn btn-primary"
+          class="btn btn-primary btn-sm"
           @click="loadSubmissions"
         >
           Refresh

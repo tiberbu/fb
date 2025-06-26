@@ -19,8 +19,7 @@
         :readonly="isReadOnly"
         :required="isRequired"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
       >
       
       <!-- Email Input -->
@@ -31,9 +30,8 @@
         :value="modelValue"
         :readonly="isReadOnly"
         :required="isRequired"
+        :class="inputClasses"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
       >
       
       <!-- Phone Input -->
@@ -44,9 +42,8 @@
         :value="modelValue"
         :readonly="isReadOnly"
         :required="isRequired"
+        :class="inputClasses"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
       >
       
       <!-- URL Input -->
@@ -57,9 +54,8 @@
         :value="modelValue"
         :readonly="isReadOnly"
         :required="isRequired"
+        :class="inputClasses"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
       >
       
       <!-- Password Input -->
@@ -71,8 +67,8 @@
         :readonly="isReadOnly"
         :required="isRequired"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- Textarea -->
@@ -84,8 +80,8 @@
         :required="isRequired"
         :rows="control.rows || 4"
         @input="handleTextareaChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       />
       
       <!-- Number Input -->
@@ -100,8 +96,8 @@
         :max="control.max"
         :step="control.step || 'any'"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- Select -->
@@ -111,8 +107,8 @@
         :disabled="isReadOnly"
         :required="isRequired"
         @change="handleSelectChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
         <option value="">{{ control.placeholder || 'Select an option' }}</option>
         <option
@@ -174,8 +170,8 @@
         :min="control.min"
         :max="control.max"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- DateTime -->
@@ -186,8 +182,8 @@
         :readonly="isReadOnly"
         :required="isRequired"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- Time -->
@@ -198,8 +194,8 @@
         :readonly="isReadOnly"
         :required="isRequired"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- File -->
@@ -211,8 +207,8 @@
           :accept="control.accept"
           :multiple="control.multiple"
           @change="handleFileChange"
-          class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          :class="{ 'bg-gray-50': isReadOnly }"
+          :class="inputClasses"
+          
         >
         <div v-if="modelValue" class="text-xs text-gray-600 mt-1">
           Selected: {{ modelValue }}
@@ -227,8 +223,8 @@
           :disabled="isReadOnly"
           :required="isRequired"
           @change="handleFileChange"
-          class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          :class="{ 'bg-gray-50': isReadOnly }"
+          :class="inputClasses"
+          
         >
         <div class="text-xs text-gray-500 mt-1">Image upload</div>
         <div v-if="modelValue" class="text-xs text-gray-600 mt-1">
@@ -271,8 +267,8 @@
           :readonly="isReadOnly"
           :required="isRequired"
           @input="handleInputChange"
-          class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          :class="{ 'bg-gray-50': isReadOnly }"
+          :class="inputClasses"
+          
         >
       </div>
       
@@ -320,8 +316,8 @@
         :readonly="isReadOnly"
         :required="isRequired"
         @input="handleInputChange"
-        class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        :class="{ 'bg-gray-50': isReadOnly }"
+        :class="inputClasses"
+        
       >
       
       <!-- Default for unknown types -->
@@ -345,6 +341,7 @@
 
 <script setup lang="ts">
 import type { Control } from '../types';
+import { computed } from 'vue';
 
 const props = defineProps<{
   control: Control;
@@ -352,11 +349,19 @@ const props = defineProps<{
   isRequired?: boolean;
   isReadOnly?: boolean;
   error?: string;
+  isPreview?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:modelValue': [value: any];
 }>();
+
+// Computed property for input element classes
+const inputClasses = computed(() => {
+  const baseClasses = 'w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+  const readOnlyClasses = props.isReadOnly ? 'bg-gray-50' : '';
+  return `${baseClasses} ${readOnlyClasses}`.trim();
+});
 
 // Update value handler
 function updateValue(value: any) {
@@ -401,6 +406,11 @@ function handleCheckboxChange(event: Event) {
 // Get CSS classes for the field
 function getFieldClasses() {
   const classes = ['form-control'];
+  
+  // Add preview mode class
+  if (props.isPreview) {
+    classes.push('form-control-preview');
+  }
   
   // Add custom CSS classes if specified
   if (props.control.cssClasses) {
@@ -448,13 +458,15 @@ function getFieldStyles() {
 .field-label {
   font-weight: 500;
   font-size: 0.75rem;
-  color: rgb(55 65 81);
+  line-height: 1rem;
+  color: #374151;
+  margin-bottom: 0.25rem;
 }
 
 .has-error .field-input input,
 .has-error .field-input select,
 .has-error .field-input textarea {
-  border-color: rgb(252 165 165);
+  border-color: rgb(239 68 68);
 }
 
 .has-error .field-input input:focus,
@@ -463,5 +475,17 @@ function getFieldStyles() {
   border-color: rgb(239 68 68);
   outline: 2px solid rgb(239 68 68);
   outline-offset: 2px;
+}
+
+/* Preview mode styling - remove borders from form control containers */
+.form-control-preview {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.form-control-preview:focus {
+  box-shadow: none !important;
+  outline: none !important;
 }
 </style>

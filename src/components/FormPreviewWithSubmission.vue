@@ -230,14 +230,14 @@
           <button 
             type="submit"
             :disabled="isSubmitting"
-            class="btn btn-primary"
+            class="btn btn-primary btn-sm"
           >
             {{ isSubmitting ? 'Submitting...' : 'Submit Form' }}
           </button>
           
           <button 
             type="button"
-            class="btn btn-outline"
+            class="btn btn-outline btn-sm"
             @click="clearForm"
           >
             Clear Form

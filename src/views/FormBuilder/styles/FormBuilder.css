@@ -1,5 +1,7 @@
-/* Import the Frappe Form Builder CSS */
+/* Import the Frappe v15 Theme and Form Builder CSS */
+@import "../../../assets/themes/frappe-v15-theme.css";
 @import "../../../assets/frappe-form-builder.css";
+@import "../../../assets/styles/buttons.css";
 
 .section-rows {
   display: flex;
@@ -49,21 +51,25 @@
 }
 
 .add-row-button {
-  background-color: #F3F4F6;
-  color: #4B5563;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 13px;
+  background-color: var(--primary);
+  color: var(--bg-color);
+  padding: var(--padding-xs) var(--padding-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px dashed #D1D5DB;
+  border: 1px solid var(--primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-xs);
 }
 
 .add-row-button:hover {
-  background-color: #E5E7EB;
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .column-wrapper {
@@ -77,21 +83,22 @@
 }
 
 .column-header {
-  padding: 4px 8px;
-  margin-bottom: 4px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6B7280;
+  padding: var(--padding-xs) var(--padding-sm);
+  margin-bottom: var(--margin-xs);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--text-color);
   cursor: pointer;
-  background-color: #F3F4F6;
-  border-radius: 4px 4px 0 0;
+  background-color: var(--bg-subtle);
+  border-radius: var(--border-radius-sm);
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: var(--transition-normal);
 }
 
 .column-header:hover {
-  background-color: #E5E7EB;
+  background-color: var(--bg-hover);
 }
 
 /* FormBuilder Sidebar styles */
@@ -124,15 +131,35 @@
 }
 
 .form-builder-sidebar-close-button {
-  background: none;
-  border: none;
+  background: var(--primary) !important;
+  color: var(--bg-color) !important;
+  border: 1px solid var(--primary) !important;
+  padding: var(--padding-xs) var(--padding-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  min-height: var(--btn-height);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--margin-xs);
   cursor: pointer;
-  font-size: 16px;
-  color: #6B7280;
+  transition: var(--transition-normal);
+}
+
+/* Ensure icons are correct color */
+.form-builder-sidebar-close-button i {
+  color: inherit !important;
+}
+
+/* Ensure text/span elements are correct color */
+.form-builder-sidebar-close-button span {
+  color: inherit !important;
 }
 
 .form-builder-sidebar-close-button:hover {
-  color: #111827;
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .form-builder-sidebar-content {
@@ -158,12 +185,12 @@ h3.font-medium {
 
 .text-sm {
   font-size: 14px;
-  color: #6B7280;
+  color: #000000;
 }
 
 .text-xs {
   font-size: 12px;
-  color: #6B7280;
+  color: #000000;
 }
 
 .bg-gray-50 {
@@ -251,7 +278,7 @@ h3.font-medium {
 }
 
 .formula-info {
-  border-left: 4px solid #6b7280;
+  border-left: 4px solid #000000;
   background-color: #f9fafb;
   padding: 12px;
   border-radius: 4px;
@@ -281,15 +308,19 @@ h3.font-medium {
 .field-type-button {
   display: flex;
   align-items: center;
-  padding: 12px;
-  background-color: #F9FAFB;
-  border: 1px solid #E5E7EB;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  padding: var(--padding-sm);
+  background-color: var(--bg-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: var(--transition-normal);
+  color: var(--text-color);
+  cursor: pointer;
 }
 
 .field-type-button:hover {
-  background-color: #F3F4F6;
+  background-color: var(--bg-hover);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 .field-type-icon {
@@ -303,11 +334,14 @@ h3.font-medium {
 
 /* Accordion Layout Styles */
 .form-accordion {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
+  margin: 0;
   padding: 24px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  min-height: 100vh;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .accordion-header {
@@ -318,6 +352,7 @@ h3.font-medium {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
+  flex-shrink: 0;
 }
 
 .accordion-header h2 {
@@ -329,6 +364,9 @@ h3.font-medium {
 
 .accordion-container {
   space-y: 12px;
+  flex: 1;
+  overflow: auto;
+  height: 100%;
 }
 
 .accordion-item {
@@ -358,7 +396,7 @@ h3.font-medium {
 }
 
 .accordion-header-item .fas.fa-chevron-right {
-  color: #6b7280;
+  color: #000000;
   font-size: 14px;
   transition: all 0.3s ease;
 }
@@ -389,6 +427,13 @@ h3.font-medium {
   padding: 24px;
   background: white;
   border-top: none;
+  width: 100%;
+  overflow: auto;
+  max-height: 70vh;
+}
+
+.accordion-content > * {
+  width: 100%;
 }
 
 /* Sidebar Layout Styles */
@@ -421,18 +466,18 @@ h3.font-medium {
 }
 
 .form-builder-sidebar-nav .add-tab-button {
-  background: #f3f4f6;
-  border: 1px solid #d1d5db;
-  color: #374151;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--bg-color);
+  font-weight: var(--font-weight-semibold);
+  transition: var(--transition-normal);
 }
 
 .form-builder-sidebar-nav .add-tab-button:hover {
-  background: #e5e7eb;
-  border-color: #9ca3af;
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
 }
 
 .sidebar-menu {
@@ -472,8 +517,8 @@ h3.font-medium {
   transform: translateY(-50%);
   width: 4px;
   height: 24px;
-  background: #6b7280;
-  border-radius: 0 4px 4px 0;
+  background: var(--primary);
+  border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
 .sidebar-menu-item button {
@@ -523,15 +568,17 @@ h3.font-medium {
 .add-tab-button {
   position: relative;
   overflow: hidden;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  font-size: 12px;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  color: #374151 !important;
-  background: white;
-  border: 1px solid #d1d5db;
+  font-size: var(--font-size-xs);
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-xs);
+  color: var(--bg-color) !important;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: var(--border-radius);
+  padding: var(--padding-xs) var(--padding-sm);
 }
 
 .add-tab-button::before {
@@ -550,9 +597,10 @@ h3.font-medium {
 }
 
 .add-tab-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  background: #f9fafb;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
 }
 
 /* Form Actions Section in Sidebar */
@@ -576,26 +624,29 @@ h3.font-medium {
 }
 
 .btn-sm {
-  padding: 6px 12px;
-  font-size: 12px;
-  border-radius: 4px;
-  border: 1px solid #D1D5DB;
-  background-color: white;
-  color: #374151;
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--font-size-xs);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--primary);
+  background-color: var(--primary);
+  color: var(--bg-color);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: var(--transition-normal);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--margin-xs);
+  min-height: var(--btn-height-sm);
 }
 
 .btn-sm:hover {
-  background-color: #F3F4F6;
-  border-color: #9CA3AF;
+  background-color: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-sm i {
-  font-size: 10px;
+  font-size: var(--font-size-xs);
 }
 
 .btn-primary.btn-sm {
@@ -648,23 +699,23 @@ h3.font-medium {
 }
 
 .top-action-bar h3 {
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 600;
+  color: var(--heading-color);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   margin: 0;
 }
 
 .top-action-bar .form-title {
-  color: #1f2937;
-  font-size: 20px;
-  font-weight: 600;
+  color: var(--heading-color);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   margin: 0;
 }
 
 .unsaved-indicator {
-  color: #f59e0b;
-  font-size: 18px;
-  font-weight: bold;
+  color: var(--warning);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
 }
 
 .action-buttons {
@@ -673,57 +724,11 @@ h3.font-medium {
   align-items: center;
 }
 
-.action-btn {
+/* Action button specific overrides if needed */
+.action-buttons {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 18px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-decoration: none;
-  background: white;
-  color: #374151;
-}
-
-.action-btn:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.action-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.action-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.action-btn.primary {
-  background: #10b981;
-  border-color: #10b981;
-  color: white;
-}
-
-.action-btn.primary:hover:not(:disabled) {
-  background: #059669;
-  border-color: #059669;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.action-btn i {
-  font-size: 14px;
-}
-
-.action-btn .fa-spinner {
-  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
@@ -829,8 +834,8 @@ h3.font-medium {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #f8fafc;
-  padding: 16px;
+  background-color: var(--bg-subtle);
+  padding: var(--padding-lg);
 }
 
 .form-container {
@@ -842,10 +847,11 @@ h3.font-medium {
 
 .form-main {
   flex: 1;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  background: var(--card-bg);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
+  border: 1px solid var(--border-color);
 }
 
 /* Enhanced animations and transitions */
@@ -938,7 +944,7 @@ h3.font-medium {
 /* Enhanced focus states for accessibility */
 .accordion-header-item:focus,
 .sidebar-menu-item:focus {
-  outline: 2px solid #6b7280;
+  outline: 2px solid #000000;
   outline-offset: 2px;
 }
 
@@ -985,7 +991,7 @@ h3.font-medium {
 @media (max-width: 640px) {
   .form-accordion {
     padding: 12px;
-    margin: 8px;
+    margin: 0;
   }
   
   .accordion-header {
@@ -1003,6 +1009,11 @@ h3.font-medium {
   
   .accordion-content {
     padding: 16px 12px;
+    width: 100%;
+  }
+  
+  .accordion-content > * {
+    width: 100%;
   }
   
   .form-builder-sidebar-nav {
@@ -1074,19 +1085,22 @@ h3.font-medium {
 .preview-back-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background-color: #6b7280;
-  color: #fff;
+  gap: var(--margin-sm);
+  padding: var(--padding-sm) var(--padding-lg);
+  background-color: var(--primary);
+  color: var(--bg-color);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius);
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s;
+  font-size: var(--font-size-sm);
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-xs);
 }
 
 .preview-back-btn:hover {
-  background-color: #4b5563;
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .preview-title {
@@ -1147,6 +1161,7 @@ h3.font-medium {
 /* Form layout container scrolling */
 .form-layout-container {
   height: 100%;
+  width: 100%;
   overflow: auto;
   flex: 1;
 }

@@ -476,14 +476,14 @@ onUnmounted(() => {
 }
 
 .btn-secondary {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
+  background: #6b7280;
+  color: white;
+  border: 1px solid #6b7280;
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: #f9fafb;
-  border-color: #9ca3af;
+  background: #4b5563;
+  border-color: #4b5563;
 }
 
 .btn-danger {

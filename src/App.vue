@@ -79,7 +79,7 @@
           <div class="header-actions">
             <button 
               v-if="showCreateButton"
-              class="btn btn-primary"
+              class="btn btn-primary btn-sm"
               @click="navigateToCreate"
             >
               <i class="fas fa-plus" />
@@ -94,6 +94,9 @@
         <router-view />
       </div>
     </main>
+    
+    <!-- Toast Notifications -->
+    <ToastNotification />
   </div>
 </template>
 
@@ -101,6 +104,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useFormCreation } from '@/composables/useFormCreation'
+import ToastNotification from '@/components/ui/ToastNotification.vue'
 import './assets/css/form-builder-enhanced.css'
 import './assets/css/form-inputs.css'
 
@@ -170,7 +174,7 @@ const navigateToCreate = async () => {
 .app-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f8fafc;
+  background-color: var(--bg-subtle);
 }
 
 /* App Sidebar Styles */
@@ -285,32 +289,6 @@ const navigateToCreate = async () => {
 .header-actions {
   display: flex;
   gap: 1rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.875rem;
-}
-
-.btn-primary {
-  background: #374151;
-  color: white;
-  box-shadow: 0 2px 4px rgba(55, 65, 81, 0.3);
-}
-
-.btn-primary:hover {
-  background: #1f2937;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(55, 65, 81, 0.4);
 }
 
 .content-area {

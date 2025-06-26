@@ -68,6 +68,7 @@
                         :model-value="getFieldValue(field)"
                         :is-required="isFieldRequired(field)"
                         :is-read-only="isFieldReadOnly(field)"
+                        :is-preview="true"
                         @update:model-value="updateFieldValue(field, $event)"
                       />
                     </div>

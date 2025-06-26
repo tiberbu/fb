@@ -1,0 +1,271 @@
+/* Frappe v15 Theme Variables */
+:root {
+  /* Core Frappe v15 Colors */
+  --gray-50: #f8f8f8;
+  --gray-100: #f3f3f3;
+  --gray-200: #ededed;
+  --gray-300: #e2e2e2;
+  --gray-400: #c7c7c7;
+  --gray-500: #999999;
+  --gray-600: #7c7c7c;
+  --gray-700: #525252;
+  --gray-800: #383838;
+  --gray-900: #171717;
+
+  /* Blue Palette */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-300: #93c5fd;
+  --blue-400: #60a5fa;
+  --blue-500: #2d95f0;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue-800: #1e40af;
+  --blue-900: #1e3a8a;
+
+  /* Green Palette */
+  --green-50: #f0fdf4;
+  --green-100: #dcfce7;
+  --green-200: #bbf7d0;
+  --green-300: #86efac;
+  --green-400: #4ade80;
+  --green-500: #22c55e;
+  --green-600: #16a34a;
+  --green-700: #15803d;
+  --green-800: #166534;
+  --green-900: #14532d;
+
+  /* Red Palette */
+  --red-50: #fef2f2;
+  --red-100: #fee2e2;
+  --red-200: #fecaca;
+  --red-300: #fca5a5;
+  --red-400: #f87171;
+  --red-500: #ef4444;
+  --red-600: #dc2626;
+  --red-700: #b91c1c;
+  --red-800: #991b1b;
+  --red-900: #7f1d1d;
+
+  /* Orange Palette */
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-300: #fdba74;
+  --orange-400: #fb923c;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+  --orange-800: #9a3412;
+  --orange-900: #7c2d12;
+
+  /* Yellow Palette */
+  --yellow-50: #fefce8;
+  --yellow-100: #fef3c7;
+  --yellow-200: #fde68a;
+  --yellow-300: #fcd34d;
+  --yellow-400: #fbbf24;
+  --yellow-500: #f59e0b;
+  --yellow-600: #d97706;
+  --yellow-700: #b45309;
+  --yellow-800: #92400e;
+  --yellow-900: #78350f;
+
+  /* Primary Frappe v15 Theme Variables */
+  --primary: var(--gray-900);
+  --primary-hover: var(--gray-800);
+  --primary-light: var(--gray-100);
+  --primary-dark: var(--gray-900);
+
+  /* Secondary Colors */
+  --secondary: var(--blue-600);
+  --secondary-hover: var(--blue-700);
+  --secondary-light: var(--blue-100);
+
+  /* Semantic Colors */
+  --success: var(--green-600);
+  --success-light: var(--green-100);
+  --warning: var(--orange-500);
+  --warning-light: var(--orange-100);
+  --danger: var(--red-600);
+  --danger-light: var(--red-100);
+  --info: var(--blue-500);
+  --info-light: var(--blue-100);
+
+  /* Text Colors */
+  --text-color: var(--gray-900);
+  --text-muted: var(--gray-600);
+  --text-light: var(--gray-500);
+  --text-dark: var(--gray-800);
+  --heading-color: var(--gray-900);
+
+  /* Background Colors */
+  --bg-color: #ffffff;
+  --bg-subtle: var(--gray-50);
+  --bg-hover: var(--gray-100);
+  --card-bg: #ffffff;
+  --surface-color: #ffffff;
+
+  /* Border & Layout */
+  --border-color: var(--gray-200);
+  --border-subtle: var(--gray-100);
+  --border-strong: var(--gray-300);
+  --divider-color: var(--gray-200);
+
+  /* Control Colors */
+  --control-bg: var(--gray-100);
+  --control-border: var(--gray-200);
+  --control-focus: var(--blue-500);
+  --control-disabled: var(--gray-300);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+  /* Spacing */
+  --padding-xs: 4px;
+  --padding-sm: 8px;
+  --padding-md: 12px;
+  --padding-lg: 16px;
+  --padding-xl: 24px;
+  --padding-2xl: 32px;
+
+  --margin-xs: 4px;
+  --margin-sm: 8px;
+  --margin-md: 12px;
+  --margin-lg: 16px;
+  --margin-xl: 24px;
+  --margin-2xl: 32px;
+
+  /* Border Radius */
+  --border-radius: 6px;
+  --border-radius-sm: 4px;
+  --border-radius-lg: 8px;
+  --border-radius-xl: 12px;
+  --border-radius-full: 9999px;
+
+  /* Typography */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* Z-Index Scale */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
+
+  /* Component Specific */
+  --btn-height: 32px;
+  --btn-height-sm: 28px;
+  --btn-height-lg: 40px;
+  --input-height: 32px;
+  --navbar-height: 48px;
+  --sidebar-width: 220px;
+
+  /* Focus States */
+  --focus-ring: 0 0 0 2px var(--blue-500);
+  --focus-ring-offset: 0 0 0 2px var(--bg-color);
+}
+
+/* Dark Theme Support */
+[data-theme="dark"] {
+  /* Dark mode overrides */
+  --bg-color: var(--gray-900);
+  --bg-subtle: var(--gray-800);
+  --bg-hover: var(--gray-700);
+  --card-bg: var(--gray-800);
+  --surface-color: var(--gray-800);
+
+  --text-color: var(--gray-100);
+  --text-muted: var(--gray-400);
+  --text-light: var(--gray-500);
+  --heading-color: var(--gray-100);
+
+  --border-color: var(--gray-700);
+  --border-subtle: var(--gray-800);
+  --border-strong: var(--gray-600);
+  --divider-color: var(--gray-700);
+
+  --control-bg: var(--gray-800);
+  --control-border: var(--gray-700);
+  --control-disabled: var(--gray-700);
+
+  --primary: var(--gray-100);
+  --primary-hover: var(--gray-200);
+}
+
+/* Global Styles */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-normal);
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility Classes */
+.text-xs { font-size: var(--font-size-xs); }
+.text-sm { font-size: var(--font-size-sm); }
+.text-base { font-size: var(--font-size-base); }
+.text-lg { font-size: var(--font-size-lg); }
+.text-xl { font-size: var(--font-size-xl); }
+.text-2xl { font-size: var(--font-size-2xl); }
+
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-medium { font-weight: var(--font-weight-medium); }
+.font-semibold { font-weight: var(--font-weight-semibold); }
+.font-bold { font-weight: var(--font-weight-bold); }
+
+.text-muted { color: var(--text-muted); }
+.text-light { color: var(--text-light); }
+.text-dark { color: var(--text-dark); }
+
+.bg-subtle { background-color: var(--bg-subtle); }
+.bg-hover { background-color: var(--bg-hover); }
+
+.border { border: 1px solid var(--border-color); }
+.border-subtle { border: 1px solid var(--border-subtle); }
+.border-strong { border: 1px solid var(--border-strong); }
+
+.rounded { border-radius: var(--border-radius); }
+.rounded-sm { border-radius: var(--border-radius-sm); }
+.rounded-lg { border-radius: var(--border-radius-lg); }
+.rounded-xl { border-radius: var(--border-radius-xl); }
+.rounded-full { border-radius: var(--border-radius-full); }
+
+.shadow-xs { box-shadow: var(--shadow-xs); }
+.shadow-sm { box-shadow: var(--shadow-sm); }
+.shadow-md { box-shadow: var(--shadow-md); }
+.shadow-lg { box-shadow: var(--shadow-lg); }
+.shadow-xl { box-shadow: var(--shadow-xl); }

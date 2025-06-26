@@ -4,7 +4,7 @@
     <div class="form-toolbar">
       <div class="toolbar-section">
         <button 
-          class="btn btn-outline" 
+          class="btn btn-outline btn-sm" 
           title="New Form"
           @click="newForm"
         >
@@ -13,7 +13,7 @@
         </button>
         
         <button 
-          class="btn btn-primary" 
+          class="btn btn-primary btn-sm" 
           title="Save Form"
           @click="openSaveModal"
         >
@@ -22,7 +22,7 @@
         </button>
         
         <button 
-          class="btn btn-outline" 
+          class="btn btn-outline btn-sm" 
           title="Load Form"
           @click="openLoadModal"
         >
@@ -92,13 +92,13 @@
         
         <div class="modal-footer">
           <button 
-            class="btn btn-secondary"
+            class="btn btn-secondary btn-sm"
             @click="closeSaveModal"
           >
             Cancel
           </button>
           <button 
-            class="btn btn-primary"
+            class="btn btn-primary btn-sm"
             :disabled="!formName.trim() || isSaving"
             @click="handleSave"
           >
@@ -173,7 +173,7 @@
         
         <div class="modal-footer">
           <button 
-            class="btn btn-secondary"
+            class="btn btn-secondary btn-sm"
             @click="closeLoadModal"
           >
             Cancel
@@ -195,6 +195,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useFormBuilderStore } from '../stores/form-builder-store';
+import { toast } from '../composables/useToast';
 
 const store = useFormBuilderStore();
 
@@ -245,31 +246,26 @@ const handleSave = async () => {
       store.formName = formName.value;
       store.formDescription = formDescription.value;
       await store.updateFormConfiguration();
-      showMessage('Form updated successfully!', 'success');
+      // Toast will be shown from the store
     } else {
       // Create new form
       await store.saveFormConfiguration(formName.value, formDescription.value);
-      showMessage('Form saved successfully!', 'success');
+      // Toast will be shown from the store
     }
     closeSaveModal();
   } catch (error) {
-    showMessage(
-      error instanceof Error ? error.message : 'Failed to save form',
-      'error'
-    );
+    // Error toast will be shown from the store
   }
 };
 
 const handleLoad = async (formId: string) => {
   try {
     await store.loadFormConfiguration(formId);
-    showMessage('Form loaded successfully!', 'success');
+    toast.success('Form Loaded', 'Form configuration loaded successfully');
     closeLoadModal();
   } catch (error) {
-    showMessage(
-      error instanceof Error ? error.message : 'Failed to load form',
-      'error'
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Failed to load form';
+    toast.error('Load Failed', errorMessage);
   }
 };
 
@@ -277,11 +273,11 @@ const newForm = () => {
   if (dirty.value) {
     if (confirm('You have unsaved changes. Create a new form anyway?')) {
       store.newForm();
-      showMessage('New form created', 'success');
+      toast.success('New Form', 'New form created successfully');
     }
   } else {
     store.newForm();
-    showMessage('New form created', 'success');
+    toast.success('New Form', 'New form created successfully');
   }
 };
 
@@ -325,53 +321,7 @@ onMounted(() => {
   gap: 8px;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: 1px solid;
-  border-radius: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #3b82f6;
-  color: white;
-  border-color: #3b82f6;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #2563eb;
-}
-
-.btn-outline {
-  background: white;
-  color: #374151;
-  border-color: #d1d5db;
-}
-
-.btn-outline:hover {
-  background: #f9fafb;
-}
-
-.btn-secondary {
-  background: #6b7280;
-  color: white;
-  border-color: #6b7280;
-}
-
-.btn-secondary:hover {
-  background: #4b5563;
-}
+/* Using standardized buttons from buttons.css */
 
 .current-form-info {
   display: flex;

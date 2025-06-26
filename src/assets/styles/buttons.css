@@ -1,0 +1,519 @@
+/* Frappe v15 Button System */
+/* Modern, consistent button design following Frappe v15 guidelines */
+
+/* Base button styles */
+.btn, .action-btn, .add-field-button, .add-section-button, .add-column-button, .add-row-button, .add-tab-button, .field-type-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--margin-sm);
+  padding: var(--padding-sm) var(--padding-md);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  text-decoration: none;
+  white-space: nowrap;
+  min-height: var(--btn-height);
+  position: relative;
+  
+  /* Default: Frappe primary (dark gray) */
+  background: var(--primary);
+  color: var(--bg-color);
+  border-color: var(--primary);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Hover state */
+.btn:hover, .action-btn:hover, .add-field-button:hover, .add-section-button:hover, 
+.add-column-button:hover, .add-row-button:hover, .add-tab-button:hover, .field-type-button:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* Active state */
+.btn:active, .action-btn:active, .add-field-button:active, .add-section-button:active,
+.add-column-button:active, .add-row-button:active, .add-tab-button:active, .field-type-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Focus state */
+.btn:focus, .action-btn:focus, .add-field-button:focus, .add-section-button:focus,
+.add-column-button:focus, .add-row-button:focus, .add-tab-button:focus, .field-type-button:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Disabled state */
+.btn:disabled, .action-btn:disabled, .add-field-button:disabled, .add-section-button:disabled,
+.add-column-button:disabled, .add-row-button:disabled, .add-tab-button:disabled, .field-type-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  background: var(--control-disabled);
+  border-color: var(--control-disabled);
+  color: var(--text-muted);
+}
+
+/* Button variants */
+
+/* Primary (default dark gray - Frappe v15 style) */
+.btn-primary, .action-btn.primary {
+  background: var(--primary);
+  color: var(--bg-color);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover, .action-btn.primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-md);
+}
+
+/* Secondary (light gray with dark text) */
+.btn-secondary {
+  background: var(--control-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Outline */
+.btn-outline {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-outline:hover {
+  background: var(--primary);
+  color: var(--bg-color);
+  border-color: var(--primary);
+}
+
+/* Success (green) */
+.btn-success {
+  background: var(--success);
+  color: var(--bg-color);
+  border-color: var(--success);
+}
+
+.btn-success:hover {
+  background: var(--green-700);
+  border-color: var(--green-700);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+/* Danger (red) */
+.btn-danger, .delete-section-button, .delete-column-button, .delete-row-button, .delete-field-btn {
+  background: var(--danger);
+  color: var(--bg-color);
+  border-color: var(--danger);
+}
+
+.btn-danger:hover, .delete-section-button:hover, .delete-column-button:hover, 
+.delete-row-button:hover, .delete-field-btn:hover {
+  background: var(--red-700);
+  border-color: var(--red-700);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+/* Warning (orange) */
+.btn-warning {
+  background: var(--warning);
+  color: var(--bg-color);
+  border-color: var(--warning);
+}
+
+.btn-warning:hover {
+  background: var(--orange-600);
+  border-color: var(--orange-600);
+  box-shadow: 0 4px 12px rgba(234, 88, 12, 0.3);
+}
+
+/* Info (blue) */
+.btn-info {
+  background: var(--info);
+  color: var(--bg-color);
+  border-color: var(--info);
+}
+
+.btn-info:hover {
+  background: var(--blue-600);
+  border-color: var(--blue-600);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Size variants */
+.btn-xs {
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--font-size-xs);
+  min-height: 24px;
+}
+
+.btn-sm {
+  padding: var(--padding-xs) var(--padding-sm);
+  font-size: var(--font-size-sm);
+  min-height: var(--btn-height-sm);
+}
+
+.btn-md {
+  padding: var(--padding-sm) var(--padding-lg);
+  font-size: var(--font-size-base);
+  min-height: var(--btn-height);
+}
+
+.btn-lg {
+  padding: var(--padding-md) var(--padding-xl);
+  font-size: var(--font-size-lg);
+  min-height: var(--btn-height-lg);
+}
+
+/* Icon-only buttons */
+.btn-icon-only {
+  padding: var(--padding-sm);
+  min-width: var(--btn-height);
+  min-height: var(--btn-height);
+}
+
+.btn-icon-only i {
+  margin: 0;
+}
+
+/* Button groups */
+.btn-group {
+  display: inline-flex;
+}
+
+.btn-group .btn {
+  border-radius: 0;
+  margin-left: -1px;
+}
+
+.btn-group .btn:first-child {
+  border-top-left-radius: var(--border-radius);
+  border-bottom-left-radius: var(--border-radius);
+  margin-left: 0;
+}
+
+.btn-group .btn:last-child {
+  border-top-right-radius: var(--border-radius);
+  border-bottom-right-radius: var(--border-radius);
+}
+
+/* Loading state */
+.btn.loading, .action-btn.loading {
+  position: relative;
+  color: transparent;
+}
+
+.btn.loading::after, .action-btn.loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin-top: -8px;
+  margin-left: -8px;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: button-loading-spinner 1s linear infinite;
+}
+
+@keyframes button-loading-spinner {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Link-style buttons */
+.btn-link {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  text-decoration: underline;
+  padding: 0;
+  min-height: auto;
+  box-shadow: none;
+}
+
+.btn-link:hover {
+  color: var(--primary-hover);
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+  text-decoration: underline;
+}
+
+/* Ghost buttons */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-color);
+}
+
+.btn-ghost:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+}
+
+/* Rounded buttons */
+.btn-rounded {
+  border-radius: var(--border-radius-full);
+}
+
+/* Block buttons */
+.btn-block {
+  width: 100%;
+  display: flex;
+}
+
+/* Button with icon spacing */
+.btn .icon {
+  margin-right: var(--margin-xs);
+}
+
+.btn .icon:last-child {
+  margin-right: 0;
+  margin-left: var(--margin-xs);
+}
+
+.btn .icon:only-child {
+  margin: 0;
+}
+/* Specific button type overrides for form builder */
+.add-field-button, .add-section-button, .add-column-button, .add-row-button {
+  background: var(--bg-color);
+  color: var(--primary);
+  border: 1px dashed var(--border-color);
+}
+
+.add-field-button:hover, .add-section-button:hover, .add-column-button:hover, .add-row-button:hover {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  border-style: solid;
+  transform: translateY(-1px);
+}
+
+.add-tab-button {
+  background: var(--primary);
+  color: var(--bg-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--padding-xs) var(--padding-sm);
+  min-height: 28px;
+}
+
+.field-type-button {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.field-type-button:hover {
+  background: var(--bg-hover);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* Action button specific styles */
+.action-btn {
+  font-size: var(--font-size-sm);
+  padding: var(--padding-xs) var(--padding-sm);
+  min-height: var(--btn-height-sm);
+}
+
+/* Form control buttons */
+.form-control-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: var(--padding-xs);
+  min-height: auto;
+}
+
+.form-control-btn:hover {
+  color: var(--text-color);
+  background: var(--bg-hover);
+  border-radius: var(--border-radius-sm);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn, .action-btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: 36px;
+  }
+  
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-height: 32px;
+  }
+}
+
+/* Special button overrides for specific components */
+
+/* Frappe v15 specific button overrides */
+.sidebar-toggle-button, .sidebar-close-button, .form-builder-sidebar-close-button {
+  background: var(--primary) !important;
+  color: var(--bg-color) !important;
+  border: 1px solid var(--primary) !important;
+  padding: var(--padding-xs) var(--padding-sm);
+  border-radius: var(--border-radius);
+  font-size: var(--font-size-sm);
+  min-height: var(--btn-height);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--margin-xs);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  box-shadow: var(--shadow-xs);
+}
+
+.sidebar-toggle-button:hover, .sidebar-close-button:hover, .form-builder-sidebar-close-button:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* Ensure icons inherit button color */
+.sidebar-toggle-button i, .sidebar-close-button i, .form-builder-sidebar-close-button i {
+  color: inherit !important;
+}
+
+/* Ensure text/span elements inherit button color */
+.sidebar-toggle-button span, .sidebar-close-button span, .form-builder-sidebar-close-button span {
+  color: inherit !important;
+}
+
+/* Preview back button */
+.preview-back-btn {
+  background: var(--primary) !important;
+  color: var(--bg-color) !important;
+  border: 1px solid var(--primary) !important;
+}
+
+.preview-back-btn:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+}
+
+.sidebar-toggle-button:hover, .sidebar-close-button:hover, .form-builder-sidebar-close-button:hover {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Active state for sidebar toggle */
+.sidebar-toggle-button.active {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Selection state (green) */
+.sidebar-toggle-button.has-selection {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+}
+
+.sidebar-toggle-button.has-selection:hover {
+  background: #059669 !important;
+  border-color: #059669 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.sidebar-toggle-button.has-selection.active {
+  background: #059669 !important;
+  border-color: #059669 !important;
+}
+
+/* Submit button */
+.submit-button {
+  background: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  min-height: 36px;
+}
+
+.submit-button:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Status buttons */
+.status-btn {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  border: none;
+  color: white;
+  min-height: 24px;
+}
+
+.status-btn.processed {
+  background: #10b981;
+}
+
+.status-btn.archived {
+  background: #6b7280;
+}
+
+/* Close buttons in modals */
+.close-btn {
+  background: #6b7280;
+  color: white;
+  border: 1px solid #6b7280;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  min-height: 32px;
+}
+
+.close-btn:hover {
+  background: #4b5563;
+  border-color: #4b5563;
+}
+
+/* Expand buttons */
+.expand-btn {
+  background: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  min-height: 24px;
+}
+
+.expand-btn:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}

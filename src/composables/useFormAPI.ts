@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import FormBuilderAPI from '../services/FormBuilderAPI';
+import { toast } from './useToast';
 import type { FormState } from '../types/form-builder';
 
 const api = new FormBuilderAPI();
@@ -118,9 +119,17 @@ export function useFormAPI() {
     
     try {
       const result = await api.submitFormData(formId, submissionData, submittedBy);
+      
+      // Show success toast
+      toast.success('Form Submitted', 'Your form has been submitted successfully');
+      
       return result.data;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to submit form';
+      
+      // Show error toast
+      toast.error('Submission Failed', error.value);
+      
       throw err;
     } finally {
       loading.value = false;

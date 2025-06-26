@@ -37,7 +37,7 @@
           
           <div class="header-actions">
             <button 
-              class="btn btn-secondary"
+              class="btn btn-secondary btn-sm"
               @click="exportSubmission"
             >
               <i class="fas fa-download" />
@@ -46,7 +46,7 @@
             
             <router-link 
               :to="`/forms/${submission.formId}/submissions`"
-              class="btn btn-secondary"
+              class="btn btn-secondary btn-sm"
             >
               <i class="fas fa-arrow-left" />
               Back to List

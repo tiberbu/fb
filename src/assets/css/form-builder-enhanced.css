@@ -1,16 +1,19 @@
-/* Enhanced Form Builder Styling */
+/* Enhanced Form Builder Styling - Frappe v15 Theme */
 
 :root {
-  --primary-color: #4F46E5;
-  --primary-light: #EEF2FF;
-  --danger: #e53e3e;
-  --success: #38a169;
-  --warning: #d97706;
-  --info: #3182ce;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --transition-base: all 0.3s ease;
+  /* Frappe v15 Primary Colors */
+  --primary-color: var(--gray-900);
+  --primary-light: var(--gray-100);
+  --danger: var(--red-600);
+  --success: var(--green-600);
+  --warning: var(--orange-500);
+  --info: var(--blue-500);
+  
+  /* Shadows aligned with Frappe v15 */
+  --shadow-sm: var(--shadow-xs);
+  --shadow-md: var(--shadow-sm);
+  --shadow-hover: var(--shadow-md);
+  --transition-base: var(--transition-normal);
 }
 
 /* Form Builder Container */
@@ -20,12 +23,12 @@
 }
 
 .form-main {
-  border-radius: 8px !important;
-  border: 1px solid var(--border-color, #d1d8dd);
-  background-color: var(--card-bg, #ffffff);
-  margin: 8px;
+  border-radius: var(--border-radius-lg) !important;
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  margin: var(--margin-sm);
   box-shadow: var(--shadow-sm);
-  transition: var(--transition-base, all 0.3s ease);
+  transition: var(--transition-base);
 }
 
 .form-main:hover {
@@ -35,24 +38,24 @@
 /* Field Styling */
 .field {
   position: relative;
-  margin: 10px 0;
-  padding: 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color, #d1d8dd);
-  background-color: var(--card-bg, #ffffff);
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-base, all 0.3s ease);
+  margin: var(--margin-sm) 0;
+  padding: var(--padding-md);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  background-color: var(--card-bg);
+  box-shadow: var(--shadow-xs);
+  transition: var(--transition-base);
 }
 
 .field:hover {
-  border-color: var(--gray-500, #6b7280);
+  border-color: var(--border-strong);
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
 }
 
 .field.selected {
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+  box-shadow: 0 0 0 2px rgba(23, 23, 23, 0.1);
 }
 
 /* Field Type Icons */

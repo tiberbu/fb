@@ -1,12 +1,19 @@
 <template>
   <div>
     <!-- Use the new componentized FormBuilder -->
-    <FormBuilderMain @form-data-change="handleFormDataChange" />
+    <FormBuilderMain 
+      :id="id"
+      @form-data-change="handleFormDataChange" 
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import FormBuilderMain from './FormBuilder/FormBuilder.vue';
+
+defineProps<{
+  id?: string
+}>()
 
 // Handle form data changes from the FormBuilder component
 function handleFormDataChange(formData: any) {
