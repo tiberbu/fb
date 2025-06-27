@@ -975,14 +975,7 @@ const editingNestedRowIndex = ref<number | null>(null);
 
 // Computed properties
 const linkedFormId = computed(() => {
-  const formId = props.df.linkedFormId;
-  
-  // Debug logging
-  if (typeof window !== 'undefined') {
-    window.console?.log('TableControl: computed linkedFormId', { formId, df: props.df });
-  }
-  
-  return formId;
+  return props.df.linkedFormId;
 });
 const tableColumns = computed(() => {
   // First priority: Use tableColumns from properties panel if available
@@ -1167,19 +1160,36 @@ async function fetchLinkedFormFields(formId: string) {
       // Extract all data fields from the form configuration
       const fields: any[] = [];
       
-      // Navigate through the form structure: tabs -> sections -> columns -> fields
+      // Navigate through the form structure: tabs -> sections -> rows -> columns -> fields
       if (linkedForm.configuration.layout && linkedForm.configuration.layout.tabs) {
         linkedForm.configuration.layout.tabs.forEach((tab: any) => {
           if (tab.sections) {
             tab.sections.forEach((section: any) => {
-              if (section.columns) {
-                section.columns.forEach((column: any) => {
-                  if (column.fields) {
-                    column.fields.forEach((field: any) => {
-                      // Only include data fields (exclude layout/UI elements)
-                      if (field.df && field.df.fieldtype && 
-                          !['Tab Break', 'Section Break', 'Column Break', 'HTML', 'Divider'].includes(field.df.fieldtype)) {
-                        fields.push(field.df);
+              if (section.rows) {
+                section.rows.forEach((row: any) => {
+                  if (row.columns) {
+                    row.columns.forEach((column: any) => {
+                      if (column.fields) {
+                        column.fields.forEach((field: any) => {
+                          // Only include data fields (exclude layout/UI elements)
+                          if (field.type && 
+                              !['Tab Break', 'Section Break', 'Column Break', 'HTML', 'Divider'].includes(field.type)) {
+                            // Convert field format to match what TableControl expects
+                            const convertedField = {
+                              fieldname: field.name,
+                              label: field.label,
+                              fieldtype: field.type,
+                              reqd: field.required || false,
+                              description: field.helpText || field.placeholder || '',
+                              options: field.options || [],
+                              min: field.min,
+                              max: field.max,
+                              step: field.step,
+                              rows: field.rows || 3
+                            };
+                            fields.push(convertedField);
+                          }
+                        });
                       }
                     });
                   }
@@ -1192,12 +1202,17 @@ async function fetchLinkedFormFields(formId: string) {
       
       // Update linked form fields - this will trigger tableColumns recomputation
       linkedFormFields.value = fields;
+      
+      /* eslint-disable no-console */
+      console.info(`TableControl: Successfully loaded ${fields.length} fields from linked form "${linkedForm.name}"`);
+      /* eslint-enable no-console */
     } else {
       linkedFormFields.value = [];
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error fetching linked form fields:', error);
+    /* eslint-disable no-console */
+    console.error('TableControl: Error fetching linked form fields:', error);
+    /* eslint-enable no-console */
     linkedFormFields.value = [];
   }
 }
