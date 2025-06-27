@@ -4,9 +4,16 @@
     :class="getFieldClasses()"
     :style="getFieldStyles()"
   >
-    <div v-if="control.label" class="field-label mb-1">
+    <!-- General label for all controls except table (table has its own label) -->
+    <div 
+      v-if="control.label && control.type !== 'table'" 
+      class="field-label mb-1"
+    >
       {{ control.label }}
-      <span v-if="isRequired" class="text-red-500 ml-1">*</span>
+      <span 
+        v-if="isRequired" 
+        class="text-red-500 ml-1"
+      >*</span>
     </div>
     
     <div class="field-input">

@@ -7,7 +7,7 @@
       v-if="df.label" 
       class="block text-sm font-medium text-gray-700 mb-2"
     >
-      {{ df.label }}
+      <!-- {{ df.label }} -->
       <span 
         v-if="df.reqd" 
         class="text-red-500 ml-1"
@@ -156,7 +156,7 @@
         <div class="modal-header px-6 py-4 border-b border-gray-200 flex justify-between items-center">
           <div>
             <h3 class="text-lg font-medium text-gray-900">
-              {{ df.label || 'Table Data' }}
+              {{ isEditing ? 'Edit Row' : 'Add New Row' }}
             </h3>
             <p class="text-sm text-gray-500 mt-1">
               {{ isEditing ? 'Edit existing row data' : 'Add new row to table' }}
