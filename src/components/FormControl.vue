@@ -330,6 +330,7 @@
       <!-- Table Control -->
       <div v-else-if="control.type === 'table'" class="w-full">
         <TableControl
+          :key="`table-${control.id}-${control.tableColumns?.length || 0}-${control.linkedFormId || 'no-form'}`"
           :df="{
             fieldtype: 'Table',
             label: control.label,
