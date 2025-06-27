@@ -37,6 +37,7 @@ import HiddenControl from './controls/HiddenControl.vue';
 import ReadOnlyControl from './controls/ReadOnlyControl.vue';
 import DividerControl from './controls/DividerControl.vue';
 import HtmlControl from './controls/HtmlControl.vue';
+import TableControl from './controls/TableControl.vue';
 
 const props = defineProps({
   df: {
@@ -58,37 +59,62 @@ defineEmits(['update:modelValue']);
 // Map of field types to control components
 const fieldTypeMap = {
   'Data': DataControl,
+  'data': DataControl,
   'Text': TextControl,
+  'text': TextControl,
   'Text Area': TextAreaControl,
   'Textarea': TextAreaControl,
+  'textarea': TextAreaControl,
   'Select': SelectControl,
+  'select': SelectControl,
   'Checkbox': CheckboxControl,
+  'checkbox': CheckboxControl,
   'Date': DateControl,
+  'date': DateControl,
   'Number': NumberControl,
+  'number': NumberControl,
   'Email': EmailControl,
+  'email': EmailControl,
   'Phone': PhoneControl,
+  'phone': PhoneControl,
   'URL': UrlControl,
+  'url': UrlControl,
   'Password': PasswordControl,
+  'password': PasswordControl,
   'Radio': RadioControl,
+  'radio': RadioControl,
   'Date Time': DateTimeControl,
   'DateTime': DateTimeControl,
+  'datetime': DateTimeControl,
   'Time': TimeControl,
+  'time': TimeControl,
   'File': FileControl,
+  'file': FileControl,
   'Image': ImageControl,
+  'image': ImageControl,
   'Range': RangeControl,
+  'range': RangeControl,
   'Color': ColorControl,
+  'color': ColorControl,
   'Hidden': HiddenControl,
+  'hidden': HiddenControl,
   'Read Only': ReadOnlyControl,
   'ReadOnly': ReadOnlyControl,
+  'readonly': ReadOnlyControl,
   'Divider': DividerControl,
+  'divider': DividerControl,
   'HTML': HtmlControl,
+  'html': HtmlControl,
+  'Table': TableControl,
+  'table': TableControl,
   // Default control for other field types
   'default': DataControl
 };
 
 // Get the appropriate component for the field type
 function getControlComponent() {
-  return fieldTypeMap[props.df.fieldtype] || fieldTypeMap.default;
+  const fieldtype = props.df.fieldtype || props.df.type;
+  return fieldTypeMap[fieldtype] || fieldTypeMap.default;
 }
 
 // Get CSS classes for the field

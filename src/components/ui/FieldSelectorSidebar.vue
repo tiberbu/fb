@@ -164,6 +164,7 @@ const advancedFields = [
   { type: "time", label: "Time" },
   { type: "file", label: "File Upload" },
   { type: "image", label: "Image Upload" },
+  { type: "table", label: "Table" },
   { type: "range", label: "Range/Slider" },
   { type: "color", label: "Color Picker" },
 ];
@@ -251,6 +252,8 @@ function getIconForFieldType(type: string) {
       return 'fa-file-upload';
     case 'image':
       return 'fa-image';
+    case 'table':
+      return 'fa-table';
     case 'range':
       return 'fa-sliders-h';
     case 'color':
@@ -303,6 +306,8 @@ function getFieldTypeDescription(type: string) {
       return 'File upload control';
     case 'image':
       return 'Image upload control';
+    case 'table':
+      return 'Table with columns from another form';
     case 'range':
       return 'Slider for numeric ranges';
     case 'color':

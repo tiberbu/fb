@@ -320,6 +320,33 @@
         
       >
       
+      <!-- Table Control -->
+      <div v-else-if="control.type === 'table'" class="w-full">
+        <TableControl
+          :df="{
+            fieldtype: 'Table',
+            label: control.label,
+            fieldname: control.name,
+            reqd: control.required,
+            placeholder: control.placeholder,
+            helpText: control.helpText,
+            linkedFormId: control.linkedFormId,
+            linkedFormName: control.linkedFormName,
+            tableColumns: control.tableColumns,
+            maxRows: control.maxRows,
+            minRows: control.minRows,
+            allowAdd: control.allowAdd,
+            allowDelete: control.allowDelete,
+            allowEdit: control.allowEdit,
+            tableData: control.tableData
+          }"
+          :value="modelValue"
+          :readonly="isReadOnly"
+          @update:model-value="$emit('update:modelValue', $event)"
+          @update:table-data="handleTableDataUpdate"
+        />
+      </div>
+      
       <!-- Default for unknown types -->
       <div v-else class="text-gray-500 text-sm p-3 border border-dashed border-gray-300 rounded">
         <i class="fas fa-question-circle mr-1"></i>
@@ -342,6 +369,7 @@
 <script setup lang="ts">
 import type { Control } from '../types';
 import { computed } from 'vue';
+import TableControl from './controls/TableControl.vue';
 
 const props = defineProps<{
   control: Control;
@@ -354,6 +382,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: any];
+  'update:control': [control: Control]; // Add this to update the control configuration
 }>();
 
 // Computed property for input element classes
@@ -366,6 +395,13 @@ const inputClasses = computed(() => {
 // Update value handler
 function updateValue(value: any) {
   emit('update:modelValue', value);
+}
+
+// Handle table data updates to persist in control configuration
+function handleTableDataUpdate(tableData: any[]) {
+  const updatedControl = { ...props.control };
+  updatedControl.tableData = tableData;
+  emit('update:control', updatedControl);
 }
 
 // File change handler

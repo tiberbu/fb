@@ -21,7 +21,8 @@ export type ControlType =
   | 'hidden'
   | 'readonly'
   | 'divider'
-  | 'html';
+  | 'html'
+  | 'table';
 
 export interface Option {
   label: string;
@@ -54,6 +55,16 @@ export interface Control {
   multiple?: boolean;
   content?: string;
   helpText?: string;
+  // Table control specific properties
+  linkedFormId?: string; // For table controls - ID of the form to use for table structure
+  linkedFormName?: string; // Display name of the linked form
+  tableColumns?: Control[]; // For table controls - fields that will be used as columns
+  maxRows?: number; // Maximum number of rows allowed
+  minRows?: number; // Minimum number of rows required
+  allowAdd?: boolean; // Allow adding new rows
+  allowDelete?: boolean; // Allow deleting rows
+  allowEdit?: boolean; // Allow editing existing rows
+  tableData?: any[]; // Table data for preview/runtime
   // CSS Styling properties
   cssClasses?: string;
   padding?: {
@@ -76,6 +87,16 @@ export interface Control {
   isHidden?: boolean;
   isReadonly?: boolean;
   dependsOn?: string[];
+  // Field definition for compatibility with Field component
+  df?: {
+    fieldtype?: string;
+    fieldname?: string;
+    label?: string;
+    name?: string;
+    isCustomField?: number;
+    required?: boolean;
+    description?: string;
+  };
 }
 
 export interface Section {
