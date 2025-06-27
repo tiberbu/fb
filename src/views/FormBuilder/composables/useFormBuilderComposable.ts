@@ -524,10 +524,15 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
   function loadSavedForm() {
     // If we have a form ID prop, try to load from API first
     if (formIdProp) {
+      // eslint-disable-next-line no-console
+      console.log('Form ID prop provided, loading from API:', formIdProp);
       loadFormFromAPI(formIdProp);
       return;
     }
 
+    // eslint-disable-next-line no-console
+    console.log('No form ID prop, attempting to load from localStorage');
+    
     // Otherwise, load from localStorage
     const savedForm = localStorage.getItem('savedFormStructure');
     if (savedForm) {
@@ -546,11 +551,21 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
               activeTab.value = 0;
             }
           }
+          
+          // eslint-disable-next-line no-console
+          console.log('Form loaded from localStorage:', { 
+            formName: formName.value, 
+            tabsCount: tabs.value.length 
+          });
         }
       } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Error parsing saved form from localStorage:', error);
         // Handle error silently for production
       }
     } else {
+      // eslint-disable-next-line no-console
+      console.log('No saved form in localStorage, initializing default form');
       // Initialize with a default section if no saved form exists
       initializeDefaultForm();
     }
@@ -558,36 +573,87 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
 
   async function loadFormFromAPI(apiFormId: string) {
     try {
+      // eslint-disable-next-line no-console
+      console.log('Loading form from API with ID:', apiFormId);
+      
       const api = new (await import('../../../services/FormBuilderAPI')).default();
       const response = await api.getFormConfiguration(apiFormId);
       
+      // eslint-disable-next-line no-console
+      console.log('API response:', response);
+      
       if (response && response.data) {
         const formData = response.data;
+        
+        // eslint-disable-next-line no-console
+        console.log('Form data from API:', formData);
+        
         formName.value = formData.name || 'Untitled Form';
         formDescription.value = formData.description || '';
         formId.value = formData._id || apiFormId;
         isPublished.value = formData.isActive || false;
-        formLayout.value = formData.metadata?.formLayout || 'tabs';
         
-        if (formData.tabs && Array.isArray(formData.tabs) && formData.tabs.length > 0) {
-          tabs.value = formData.tabs;
+        // The form configuration is stored in the configuration field
+        const configuration = formData.configuration;
+        if (configuration) {
+          // eslint-disable-next-line no-console
+          console.log('Configuration object:', configuration);
+          
+          // Check for different possible structures
+          if (configuration.layout?.tabs) {
+            // New structure with layout wrapper
+            formLayout.value = configuration.layout.formLayout || 'tabs';
+            tabs.value = configuration.layout.tabs;
+            // eslint-disable-next-line no-console
+            console.log('Loaded tabs from configuration.layout.tabs:', tabs.value);
+          } else if (configuration.tabs) {
+            // Direct tabs in configuration
+            formLayout.value = configuration.metadata?.formLayout || 'tabs';
+            tabs.value = configuration.tabs;
+            // eslint-disable-next-line no-console
+            console.log('Loaded tabs from configuration.tabs:', tabs.value);
+          } else {
+            // eslint-disable-next-line no-console
+            console.warn('No tabs found in configuration, initializing default form');
+            // Legacy structure or empty configuration
+            initializeDefaultForm();
+            return;
+          }
+          
+          // Ensure active tab is valid
           if (activeTab.value >= tabs.value.length) {
             activeTab.value = 0;
           }
+          
+          // eslint-disable-next-line no-console
+          console.log('Form loaded successfully. Active tab:', activeTab.value, 'Total tabs:', tabs.value.length);
         } else {
-          // Initialize with default section if no tabs exist
+          // eslint-disable-next-line no-console
+          console.warn('No configuration found in API response, initializing default form');
+          // Initialize with default section if no configuration exists
           initializeDefaultForm();
         }
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn('Invalid API response:', response);
+        initializeDefaultForm();
       }
     } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error loading form from API:', error);
       // If API fails, initialize with default form
       initializeDefaultForm();
     }
   }
 
   function initializeDefaultForm() {
+    // eslint-disable-next-line no-console
+    console.log('Initializing default form. Current tabs:', tabs.value);
+    
     // Ensure the first tab has at least one section
     if (tabs.value.length > 0 && tabs.value[0].sections.length === 0) {
+      // eslint-disable-next-line no-console
+      console.log('Adding default section to first tab');
       addSection();
     }
   }
@@ -935,18 +1001,6 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
     try {
       const api = new (await import('../../../services/FormBuilderAPI')).default();
       
-      const formData = {
-        name: formName.value,
-        description: formDescription.value,
-        isActive: isPublished.value,
-        metadata: {
-          formLayout: formLayout.value,
-          lastUpdated: new Date().toISOString(),
-          version: '1.0.0'
-        },
-        tabs: tabs.value
-      };
-
       let response;
       
       // Check if this is a local ID (needs to be created, not updated)
@@ -956,14 +1010,16 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
           name: formName.value,
           description: formDescription.value,
           configuration: {
-            isActive: isPublished.value,
-            metadata: {
+            layout: {
               formLayout: formLayout.value,
+              tabs: tabs.value
+            },
+            metadata: {
               lastUpdated: new Date().toISOString(),
               version: '1.0.0'
-            },
-            tabs: tabs.value
+            }
           },
+          isActive: isPublished.value,
           createdBy: 'form-builder-user'
         };
         
@@ -979,14 +1035,16 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
           name: formName.value,
           description: formDescription.value,
           configuration: {
-            isActive: isPublished.value,
-            metadata: {
+            layout: {
               formLayout: formLayout.value,
+              tabs: tabs.value
+            },
+            metadata: {
               lastUpdated: new Date().toISOString(),
               version: '1.0.0'
-            },
-            tabs: tabs.value
+            }
           },
+          isActive: isPublished.value,
           updatedBy: 'form-builder-user'
         });
       }

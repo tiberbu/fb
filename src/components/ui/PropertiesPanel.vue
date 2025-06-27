@@ -1,8 +1,14 @@
 <template>
   <div class="properties-panel p-4">
-    <h3 class="text-lg font-medium text-gray-800 mb-4">
-      {{ isSection ? 'Section Properties' : 'Field Properties' }}
-    </h3>
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-medium text-gray-800">
+        {{ isSection ? 'Section Properties' : 'Field Properties' }}
+      </h3>
+      <div v-if="isAutoSaving" class="flex items-center text-xs text-blue-600">
+        <i class="fas fa-spinner fa-spin mr-1"></i>
+        Auto-saving...
+      </div>
+    </div>
     
     <!-- Section Properties -->
     <template v-if="isSection && store.form.selectedField">
@@ -62,6 +68,7 @@
       <div class="flex justify-between mt-6">
         <button 
           class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+          style="color: white !important;"
           @click="deleteSection" 
         >
           Delete Section
@@ -72,7 +79,7 @@
     <!-- Field Properties -->
     <template v-else-if="control">
       <!-- Common Properties Accordion -->
-      <AccordionSection title="Common Properties">
+      <AccordionSection title="Common Properties" :initially-open="true">
         <div class="mb-4">
           <label class="block text-sm text-gray-600 mb-1">Label</label>
           <input 
@@ -328,12 +335,14 @@
       <div class="flex justify-between mt-6">
         <button 
           class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
-          @click="$emit('delete', controlCopy.id)"
+          style="color: white !important;"
+          @click="deleteField"
         >
           Delete Field
         </button>
         <button 
           class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
+          style="color: white !important;"
           @click="updateControl" 
         >
           Update Field
@@ -363,14 +372,71 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['update', 'delete']);
+const emit = defineEmits(['update', 'delete', 'close-panel']);
 const store = useFormBuilderStore();
+
+// Auto-save functionality
+const autoSaveTimeout = ref<number | null>(null);
+const isAutoSaving = ref(false);
+
+// Auto-save function
+async function autoSave() {
+  if (!controlCopy.value) return;
+  
+  isAutoSaving.value = true;
+  try {
+    // Emit update to parent to save changes
+    emit('update', controlCopy.value);
+    
+    // Force persistence to localStorage by getting current form state
+    const currentFormStructure = {
+      metadata: {
+        formName: store.formName || 'New Form',
+        formDescription: store.formDescription || '',
+        formId: store.currentFormId || `form-${Date.now()}`,
+        isPublished: false, // This would come from form metadata if available
+        formLayout: 'tabs', // Default layout
+        dateCreated: new Date().toISOString(),
+        lastUpdated: new Date().toISOString()
+      },
+      tabs: store.form.layout?.tabs || []
+    };
+    
+    // Save to localStorage to ensure persistence
+    localStorage.setItem('savedFormStructure', JSON.stringify(currentFormStructure));
+    
+    // Mark form as dirty to indicate changes
+    store.dirty = true;
+    
+    // If there's a form API and formId, save to backend
+    if (store.currentFormId && store.currentFormId !== 'new') {
+      // You can integrate with your form API here for auto-save to backend
+      // await store.saveFormConfiguration(store.formName, store.formDescription);
+    }
+  } catch (error) {
+    // Handle auto-save error silently or with a toast notification
+    // eslint-disable-next-line no-console
+    console.error('Auto-save failed:', error);
+  } finally {
+    isAutoSaving.value = false;
+  }
+}
+
+// Debounced auto-save
+function triggerAutoSave() {
+  if (autoSaveTimeout.value) {
+    clearTimeout(autoSaveTimeout.value);
+  }
+  
+  autoSaveTimeout.value = window.setTimeout(() => {
+    autoSave();
+  }, 1000); // Auto-save after 1 second of inactivity
+}
 
 // Create a local copy of the control to avoid mutating props directly
 const controlCopy = ref<Control | null>(null);
 
 // Formula editor state
-const showFormulaEditor = ref(false);
 const showSectionFormulaEditor = ref(false);
 
 // Formula state
@@ -409,10 +475,16 @@ watch(() => props.control, (newControl) => {
   }
 }, { immediate: true });
 
+// Watch for changes in controlCopy to trigger auto-save
+watch(controlCopy, () => {
+  if (controlCopy.value) {
+    triggerAutoSave();
+  }
+}, { deep: true });
+
 // Check if the selected field is a section
 const isSection = computed(() => {
-  return store.form.selectedField?.fieldtype === 'Section Break' || 
-         store.form.selectedField?.type === 'Section Break';
+  return store.form.selectedField?.fieldtype === 'Section Break';
 });
 
 // Get all fields in the form
@@ -420,8 +492,8 @@ const allFields = computed(() => {
   // Gather all fields from all tabs, sections, and columns
   let fields: Control[] = [];
   
-  if (store.form.tabs) {
-    store.form.tabs.forEach((tab: any) => {
+  if (store.form.layout.tabs) {
+    store.form.layout.tabs.forEach((tab: any) => {
       if (tab.sections) {
         tab.sections.forEach((section: any) => {
           if (section.rows) {
@@ -454,11 +526,6 @@ function getAvailableFields(currentControl: Control): Control[] {
   return allFields.value.filter(field => field.id !== currentControl.id);
 }
 
-// Toggle the formula editor visibility
-function toggleFormulaEditor() {
-  showFormulaEditor.value = !showFormulaEditor.value;
-}
-
 // Toggle the section formula editor visibility
 function toggleSectionFormulaEditor() {
   showSectionFormulaEditor.value = !showSectionFormulaEditor.value;
@@ -472,8 +539,8 @@ function updateSectionFormula(formulaData: {
   dependsOn: string[];
 }) {
   if (store.form.selectedField) {
-    // Create a local copy
-    const updatedField = { ...store.form.selectedField };
+    // Create a local copy and use type assertion to add formula properties
+    const updatedField = { ...store.form.selectedField } as any;
     
     // Update formula properties
     updatedField.formula = formulaData.formula;
@@ -506,6 +573,21 @@ function updateFormulas(newFormulas: Formula[]) {
 function updateControl() {
   if (controlCopy.value) {
     emit('update', controlCopy.value);
+    // Hide the panel after update
+    emit('close-panel');
+    // Clear selected field
+    store.form.selectedField = null;
+  }
+}
+
+// Delete the field
+function deleteField() {
+  if (controlCopy.value) {
+    emit('delete', controlCopy.value.id);
+    // Hide the panel after delete
+    emit('close-panel');
+    // Clear selected field
+    store.form.selectedField = null;
   }
 }
 
@@ -515,6 +597,10 @@ function addOption() {
       ...controlCopy.value as Control,
       options: []
     };
+  }
+  
+  if (!controlCopy.value.options) {
+    controlCopy.value.options = [];
   }
   
   const newIndex = controlCopy.value.options.length + 1;
@@ -578,7 +664,6 @@ function deleteSection() {
               currentTab.sections.splice(sectionIndex, 1);
               store.form.selectedField = null;
             },
-            "Move Fields",
             () => {
               // Just delete section and its fields
               currentTab.sections.splice(sectionIndex, 1);

@@ -18,59 +18,11 @@
       </h3>
       <button
         class="form-builder-sidebar-close-button"
+        title="Close Properties Panel"
         @click="$emit('close-sidebar')"
       >
         <i class="fas fa-times" />
       </button>
-    </div>
-    
-    <!-- Form Management Actions -->
-    <div class="form-actions-section">
-      <div class="form-actions-header">
-        <h4>Form Actions</h4>
-      </div>
-      <div class="form-actions-buttons">
-        <button 
-          class="btn btn-primary btn-sm" 
-          title="Save Changes"
-          :disabled="isSaving || !isDirty"
-          @click="$emit('save-form')"
-        >
-          <i 
-            :class="isSaving ? 'fas fa-spinner fa-spin' : 'fas fa-save'"
-          />
-          {{ isSaving ? 'Saving...' : (isDirty ? 'Save Changes' : 'Saved') }}
-          <span 
-            v-if="isDirty && !isSaving" 
-            class="unsaved-indicator"
-          >*</span>
-        </button>
-        
-        <button 
-          class="btn btn-outline btn-sm" 
-          title="Export Form"
-          @click="$emit('export-form')"
-        >
-          <i class="fas fa-download" />
-          Export
-        </button>
-        
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json"
-          style="display: none"
-          @change="$emit('handle-file-import', $event)"
-        >
-        <button 
-          class="btn btn-outline btn-sm" 
-          title="Import Form"
-          @click="triggerFileInput"
-        >
-          <i class="fas fa-upload" />
-          Import
-        </button>
-      </div>
     </div>
     
     <div class="form-builder-sidebar-content">
@@ -92,6 +44,7 @@
         :control="selectedControl"
         @update="$emit('update-control', $event)"
         @delete="$emit('delete-control', $event)"
+        @close-panel="handleClosePanel"
       />
 
       <!-- Section Properties -->
@@ -151,7 +104,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
 import { Control } from "../../../types";
 import FormBuilderControlProperties from "./sidebar/FormBuilderControlProperties.vue";
 import FormBuilderSectionProperties from "./sidebar/FormBuilderSectionProperties.vue";
@@ -159,12 +111,6 @@ import FormBuilderColumnProperties from "./sidebar/FormBuilderColumnProperties.v
 import FormBuilderRowProperties from "./sidebar/FormBuilderRowProperties.vue";
 import FormBuilderFormConfiguration from "./sidebar/FormBuilderFormConfiguration.vue";
 import FormBuilderTabProperties from "./sidebar/FormBuilderTabProperties.vue";
-
-const fileInput = ref<HTMLInputElement | null>(null);
-
-const triggerFileInput = () => {
-  fileInput.value?.click();
-};
 
 interface Props {
   showSidebar: boolean;
@@ -181,8 +127,6 @@ interface Props {
   formLayout: string;
   fieldSearchQuery: string;
   filteredFieldTypes: Array<{ type: string; label: string }>;
-  isSaving: boolean;
-  isDirty: boolean;
 }
 
 const props = defineProps<Props>();
@@ -231,7 +175,12 @@ function getAllFields(): Control[] {
   return fields;
 }
 
-defineEmits<{
+// Handle closing the panel
+function handleClosePanel() {
+  emit('close-sidebar');
+}
+
+const emit = defineEmits<{
   'close-sidebar': [];
   'update-control': [control: Control];
   'delete-control': [id: string];
@@ -250,7 +199,6 @@ defineEmits<{
   'update:form-layout': [value: string];
   'update:field-search-query': [value: string];
   'export-form': [];
-  'save-form': [];
   'handle-file-import': [event: Event];
   'open-formula-preview': [];
   'copy-to-clipboard': [];

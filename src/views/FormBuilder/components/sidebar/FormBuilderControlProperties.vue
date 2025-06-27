@@ -4,6 +4,7 @@
       :control="control"
       @update="$emit('update', $event)"
       @delete="$emit('delete', $event)"
+      @close-panel="$emit('close-panel')"
     />
   </div>
 </template>
@@ -21,5 +22,6 @@ defineProps<Props>();
 defineEmits<{
   'update': [control: Control];
   'delete': [id: string];
+  'close-panel': [];
 }>();
 </script>

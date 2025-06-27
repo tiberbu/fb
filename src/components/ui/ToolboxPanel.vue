@@ -39,5 +39,17 @@ export default defineComponent({
 
 .controls button {
   margin: 5px 0;
+  background-color: #374151;
+  color: white;
+  border: 1px solid #374151;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.controls button:hover {
+  background-color: #1f2937;
+  border-color: #1f2937;
 }
 </style>

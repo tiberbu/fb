@@ -185,12 +185,12 @@ h3.font-medium {
 
 .text-sm {
   font-size: 14px;
-  color: #000000;
+  color: inherit;
 }
 
 .text-xs {
   font-size: 12px;
-  color: #000000;
+  color: inherit;
 }
 
 .bg-gray-50 {
@@ -603,24 +603,89 @@ h3.font-medium {
   border-color: var(--primary-hover);
 }
 
-/* Form Actions Section in Sidebar */
-.form-actions-section {
-  padding: 16px;
+/* Sidebar Header Styles */
+.form-builder-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
   border-bottom: 1px solid #E5E7EB;
   background-color: #F9FAFB;
 }
 
-.form-actions-header h4 {
-  font-size: 14px;
+.form-builder-sidebar-title {
+  font-size: 16px;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 12px;
+  margin: 0;
 }
 
-.form-actions-buttons {
+.form-builder-sidebar-close-button {
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: none;
+  color: #6B7280;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.form-builder-sidebar-close-button:hover {
+  background-color: #E5E7EB;
+  color: #374151;
+}
+
+/* Sidebar Button Styles - Only white text for dark backgrounds */
+.form-builder-popover-sidebar .bg-red-600,
+.properties-panel .bg-red-600,
+.field-selector-sidebar .bg-red-600,
+.form-builder-popover-sidebar .bg-red-500,
+.properties-panel .bg-red-500,
+.field-selector-sidebar .bg-red-500,
+.form-builder-popover-sidebar .bg-red-700,
+.properties-panel .bg-red-700,
+.field-selector-sidebar .bg-red-700 {
+  color: white !important;
+}
+
+.form-builder-popover-sidebar .bg-blue-600,
+.properties-panel .bg-blue-600,
+.field-selector-sidebar .bg-blue-600,
+.form-builder-popover-sidebar .bg-blue-500,
+.properties-panel .bg-blue-500,
+.field-selector-sidebar .bg-blue-500,
+.form-builder-popover-sidebar .bg-blue-700,
+.properties-panel .bg-blue-700,
+.field-selector-sidebar .bg-blue-700 {
+  color: white !important;
+}
+
+.form-builder-popover-sidebar .bg-green-600,
+.properties-panel .bg-green-600,
+.field-selector-sidebar .bg-green-600,
+.form-builder-popover-sidebar .bg-green-500,
+.properties-panel .bg-green-500,
+.field-selector-sidebar .bg-green-500,
+.form-builder-popover-sidebar .bg-green-700,
+.properties-panel .bg-green-700,
+.field-selector-sidebar .bg-green-700 {
+  color: white !important;
+}
+
+.form-builder-popover-sidebar .bg-gray-800,
+.properties-panel .bg-gray-800,
+.field-selector-sidebar .bg-gray-800,
+.form-builder-popover-sidebar .bg-gray-900,
+.properties-panel .bg-gray-900,
+.field-selector-sidebar .bg-gray-900,
+.form-builder-popover-sidebar .bg-black,
+.properties-panel .bg-black,
+.field-selector-sidebar .bg-black {
+  color: white !important;
 }
 
 .btn-sm {
@@ -652,7 +717,7 @@ h3.font-medium {
 .btn-primary.btn-sm {
   background-color: #374151;
   border-color: #374151;
-  color: white;
+  color: white !important;
 }
 
 .btn-primary.btn-sm:hover:not(:disabled) {

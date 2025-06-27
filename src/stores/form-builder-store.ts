@@ -201,16 +201,31 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
     try {
       const result = await api.getFormConfiguration(formId);
       
-      form.value = result.configuration;
-      currentFormId.value = result._id;
-      formName.value = result.name;
-      formDescription.value = result.description || '';
-      
-      if (form.value.layout.tabs?.length > 0) {
-        form.value.activeTab = form.value.layout.tabs[0].df.name;
+      if (result && result.data) {
+        const formData = result.data;
+        
+        // Set the form configuration from the API response
+        if (formData.configuration) {
+          form.value = formData.configuration;
+        } else {
+          // Initialize with default layout if no configuration
+          form.value = {
+            layout: createLayout(),
+            activeTab: null,
+            selectedField: null,
+          };
+        }
+        
+        currentFormId.value = formData._id;
+        formName.value = formData.name;
+        formDescription.value = formData.description || '';
+        
+        if (form.value.layout.tabs?.length > 0) {
+          form.value.activeTab = form.value.layout.tabs[0].df.name;
+        }
+        
+        dirty.value = false;
       }
-      
-      dirty.value = false;
     } finally {
       isLoading.value = false;
     }

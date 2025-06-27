@@ -1,43 +1,51 @@
 <template>
   <div 
     v-if="isOpen" 
-    class="field-selector-sidebar fixed right-0 top-0 h-full w-80 bg-white shadow-2xl z-50 border-l border-gray-200"
+    class="field-selector-sidebar fixed right-0 top-0 h-full w-80 bg-white shadow-2xl border-l border-gray-200 flex flex-col"
+    style="z-index: 250;"
   >
     <!-- Sidebar Header -->
-    <div class="sidebar-header p-4 border-b border-gray-200 bg-gray-50">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">Add Field</h2>
+    <div class="sidebar-header flex-shrink-0 px-6 py-5 border-b border-gray-200 bg-white">
+      <div class="flex items-start justify-between">
+        <div class="flex-1 pr-4">
+          <h2 class="text-xl font-semibold text-gray-900 mb-1">
+            Add Field
+          </h2>
+          <p class="text-sm text-gray-600 leading-relaxed">
+            Choose a field type to add to your form
+          </p>
+        </div>
         <button 
           @click="$emit('close')"
-          class="p-1 hover:bg-gray-200 rounded-md transition-colors"
+          class="flex-shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Close sidebar"
         >
-          <i class="fas fa-times text-gray-500" />
+          <i class="fas fa-times text-gray-400 hover:text-gray-600" />
         </button>
       </div>
-      <p class="text-sm text-gray-600 mt-1">Choose a field type to add to your form</p>
     </div>
 
     <!-- Search -->
-    <div class="p-4 border-b border-gray-100">
+    <div class="flex-shrink-0 p-4 border-b border-gray-100 bg-gray-50">
       <div class="relative">
         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
         <input
           v-model="fieldSearchQuery"
           type="text"
           placeholder="Search field types..."
-          class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         >
       </div>
     </div>
 
     <!-- Field Categories -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto min-h-0">
       <!-- Basic Fields -->
       <div class="field-category">
-        <div class="category-header px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
           <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Basic Fields</h3>
         </div>
-        <div class="field-list p-2">
+        <div class="field-list p-3 space-y-1">
           <button
             v-for="fieldType in filteredBasicFields"
             :key="fieldType.type"
@@ -57,10 +65,10 @@
 
       <!-- Advanced Fields -->
       <div class="field-category">
-        <div class="category-header px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
           <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Advanced Fields</h3>
         </div>
-        <div class="field-list p-2">
+        <div class="field-list p-3 space-y-1">
           <button
             v-for="fieldType in filteredAdvancedFields"
             :key="fieldType.type"
@@ -80,10 +88,10 @@
 
       <!-- Layout & Display -->
       <div class="field-category">
-        <div class="category-header px-4 py-3 bg-gray-50 border-b border-gray-100">
+        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
           <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Layout & Display</h3>
         </div>
-        <div class="field-list p-2">
+        <div class="field-list p-3 space-y-1">
           <button
             v-for="fieldType in filteredLayoutFields"
             :key="fieldType.type"
@@ -103,16 +111,20 @@
     </div>
 
     <!-- No Results -->
-    <div v-if="allFilteredFields.length === 0 && fieldSearchQuery" class="p-8 text-center">
-      <i class="fas fa-search text-3xl text-gray-300 mb-3" />
-      <p class="text-gray-500 text-sm">No field types found matching "{{ fieldSearchQuery }}"</p>
+    <div v-if="allFilteredFields.length === 0 && fieldSearchQuery" class="flex-1 flex items-center justify-center p-8">
+      <div class="text-center">
+        <i class="fas fa-search text-4xl text-gray-300 mb-4" />
+        <p class="text-gray-500 text-sm">No field types found matching "{{ fieldSearchQuery }}"</p>
+        <p class="text-gray-400 text-xs mt-2">Try a different search term</p>
+      </div>
     </div>
   </div>
 
   <!-- Backdrop -->
   <div 
     v-if="isOpen" 
-    class="fixed inset-0 bg-black bg-opacity-25 z-40"
+    class="fixed inset-0 bg-black bg-opacity-25"
+    style="z-index: 240;"
     @click="$emit('close')"
   />
 </template>
@@ -312,9 +324,38 @@ function getFieldTypeDescription(type: string) {
 </script>
 
 <style scoped>
+/* 
+ * Field Selector Sidebar Z-Index: 250
+ * Must be higher than FormBuilder top action bar (z-index: 100)
+ */
 .field-selector-sidebar {
   transform: translateX(0);
   transition: transform 0.3s ease-in-out;
+  /* Ensure proper scrolling container */
+  min-height: 0;
+}
+
+/* Header styling improvements */
+.sidebar-header {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.sidebar-header h2 {
+  line-height: 1.2;
+}
+
+.sidebar-header p {
+  line-height: 1.4;
+  max-width: 280px;
+}
+
+.field-type-item {
+  /* Improve field item styling */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.field-type-item:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .field-type-item:hover .field-icon {
@@ -325,21 +366,42 @@ function getFieldTypeDescription(type: string) {
   padding-bottom: 2rem;
 }
 
-/* Custom scrollbar */
+/* Improved scrollbar styling */
 .field-selector-sidebar ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 
 .field-selector-sidebar ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #f8fafc;
 }
 
 .field-selector-sidebar ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 4px;
+  border: 1px solid #f8fafc;
 }
 
 .field-selector-sidebar ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* Category header styling */
+.category-header {
+  backdrop-filter: blur(8px);
+}
+
+/* Search input focus improvements */
+.field-selector-sidebar input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Close button improvements */
+.sidebar-header button:hover i {
+  transform: scale(1.1);
+}
+
+.sidebar-header button:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
 }
 </style>

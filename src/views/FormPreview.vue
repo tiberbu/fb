@@ -1,130 +1,202 @@
 <template>
-  <div class="bg-white shadow rounded-lg p-6 max-w-3xl mx-auto">
-    <div class="flex justify-between items-center mb-6">
-      <div>
-        <h2 class="text-2xl font-semibold">{{ formMetadata.formName || 'Form Preview' }}</h2>
-        <p v-if="formMetadata.formDescription" class="text-gray-600 mt-1">
+  <div class="form-preview-container">
+    <!-- Paper Form Layout -->
+    <div 
+      v-if="hasFormContent" 
+      class="paper-form"
+    >
+      <!-- Form Header -->
+      <div class="form-header">
+        <h1 class="form-title">
+          {{ formMetadata.formName || 'Untitled Form' }}
+        </h1>
+        <p 
+          v-if="formMetadata.formDescription" 
+          class="form-description"
+        >
           {{ formMetadata.formDescription }}
         </p>
       </div>
-      <div class="flex gap-3">
-        <button
-          class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          @click="importForm"
-        >
-          <i class="fas fa-file-import mr-1" /> Import
-        </button>
-        <button
-          class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-          @click="goBackToBuilder"
-        >
-          <i class="fas fa-arrow-left mr-1" /> Back to Builder
-        </button>
-      </div>
-    </div>
-    
-    <div v-if="!hasFormContent" class="text-center py-12 border-2 border-dashed border-gray-300 rounded-lg">
-      <i class="fas fa-file-import text-4xl text-gray-400 mb-3" />
-      <p class="text-gray-500">No form loaded. Please import a form JSON file.</p>
-    </div>
-    
-    <form v-else @submit.prevent="submitForm" class="space-y-6">
-      <div 
-        v-for="(tab, tabIndex) in formData.tabs" 
-        :key="tabIndex"
-        v-show="!isTabHidden(tabIndex)"
+
+      <!-- Form Content -->
+      <form 
+        class="form-content"
+        @submit.prevent="submitForm"
       >
-        <div class="mb-6">
-          <h3 class="text-xl font-medium border-b pb-2 mb-4">{{ tab.label }}</h3>
+        <!-- Tabs Layout -->
+        <div 
+          v-if="formLayout === 'tabs'" 
+          class="form-tabs-layout"
+        >
+          <div class="tabs-header">
+            <div class="tabs-container">
+              <button
+                v-for="(tab, tabIndex) in visibleTabs"
+                :key="tabIndex"
+                type="button"
+                :class="['tab-button', { active: activeTabIndex === tabIndex }]"
+                @click="activeTabIndex = tabIndex"
+              >
+                {{ tab.label }}
+              </button>
+            </div>
+          </div>
           
-          <template v-for="(section, sectionIndex) in tab.sections" :key="section.id">
+          <div class="tab-content">
             <div 
-              class="mb-8"
-              v-show="!isSectionHidden(section.id)"
+              v-if="currentTab" 
+              class="tab-sections"
             >
-              <div class="flex items-center mb-3">
-                <h4 class="font-medium text-lg">{{ section.title || 'Untitled Section' }}</h4>
-              </div>
-              
-              <div v-for="(row, rowIndex) in section.rows" :key="row.id" class="mb-4">
-                <div class="flex gap-4">
-                  <div 
-                    v-for="(column, colIndex) in row.columns" 
-                    :key="colIndex"
-                    :class="[
-                      'flex-1',
-                      column.fields && column.fields.length === 0 ? 'hidden' : ''
-                    ]"
-                  >
-                    <div 
-                      v-for="field in column.fields" 
-                      :key="field.id" 
-                      :class="getFieldClasses(field)"
-                      :style="getFieldStyles(field)"
-                      v-show="!isFieldHidden(field.id)"
-                    >
-                      <FormControl
-                        :control="field"
-                        :model-value="getFieldValue(field)"
-                        :is-required="isFieldRequired(field)"
-                        :is-read-only="isFieldReadOnly(field)"
-                        :is-preview="true"
-                        @update:model-value="updateFieldValue(field, $event)"
-                      />
-                    </div>
-                  </div>
+              <FormPreviewSections 
+                :sections="currentTab.sections"
+                :form-values="formValues"
+                :field-visibility="fieldVisibility"
+                :field-read-only="fieldReadOnly"
+                :field-required="fieldRequired"
+                :section-visibility="sectionVisibility"
+                @update-field="updateFieldValue"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Accordion Layout -->
+        <div 
+          v-else-if="formLayout === 'accordion'" 
+          class="form-accordion-layout"
+        >
+          <div
+            v-for="(tab, tabIndex) in visibleTabs"
+            :key="tabIndex"
+            class="accordion-item"
+          >
+            <button
+              type="button"
+              :class="['accordion-header', { active: expandedAccordions.includes(tabIndex) }]"
+              @click="toggleAccordion(tabIndex)"
+            >
+              <span class="accordion-title">{{ tab.label }}</span>
+              <i :class="['fas', expandedAccordions.includes(tabIndex) ? 'fa-chevron-up' : 'fa-chevron-down']" />
+            </button>
+            
+            <div 
+              v-show="expandedAccordions.includes(tabIndex)" 
+              class="accordion-content"
+            >
+              <FormPreviewSections 
+                :sections="tab.sections"
+                :form-values="formValues"
+                :field-visibility="fieldVisibility"
+                :field-read-only="fieldReadOnly"
+                :field-required="fieldRequired"
+                :section-visibility="sectionVisibility"
+                @update-field="updateFieldValue"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Sidebar Layout -->
+        <div 
+          v-else-if="formLayout === 'sidebar'" 
+          class="form-sidebar-layout"
+        >
+          <div class="sidebar-nav">
+            <div class="sidebar-header">
+              <h3>Form Pages</h3>
+            </div>
+            <nav class="sidebar-menu">
+              <button
+                v-for="(tab, tabIndex) in visibleTabs"
+                :key="tabIndex"
+                type="button"
+                :class="['sidebar-menu-item', { active: activeTabIndex === tabIndex }]"
+                @click="activeTabIndex = tabIndex"
+              >
+                <span class="sidebar-item-label">{{ tab.label }}</span>
+                <div class="page-indicator">
+                  {{ tabIndex + 1 }}
                 </div>
+              </button>
+            </nav>
+          </div>
+          
+          <div class="sidebar-content">
+            <div 
+              v-if="currentTab" 
+              class="page-header"
+            >
+              <h2 class="page-title">
+                {{ currentTab.label }}
+              </h2>
+              <div class="page-meta">
+                Page {{ activeTabIndex + 1 }} of {{ visibleTabs.length }}
               </div>
             </div>
-          </template>
+            
+            <div class="page-sections">
+              <FormPreviewSections 
+                :sections="currentTab.sections"
+                :form-values="formValues"
+                :field-visibility="fieldVisibility"
+                :field-read-only="fieldReadOnly"
+                :field-required="fieldRequired"
+                :section-visibility="sectionVisibility"
+                @update-field="updateFieldValue"
+              />
+            </div>
+          </div>
         </div>
+
+        <!-- Submit Button -->
+        <div class="form-footer">
+          <button 
+            type="submit" 
+            class="submit-button"
+          >
+            Submit Form
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Empty State -->
+    <div 
+      v-else 
+      class="empty-form"
+    >
+      <div class="empty-icon">
+        <i class="fas fa-file-alt" />
       </div>
-      
-      <div class="pt-4">
-        <button
-          type="submit"
-          class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
-          Submit
-        </button>
-      </div>
-    </form>
+      <h3>No Form Content</h3>
+      <p>Create a form in the builder to see the preview here.</p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, defineProps, watch } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, watch } from 'vue';
 import { evaluateFormula } from '../utils/formula-evaluator';
 import type { Formula } from '../types';
+import FormPreviewSections from '../components/FormPreviewSections.vue';
 
-// Import the unified form control component
-import FormControl from '../components/FormControl.vue';
-
-const router = useRouter();
 const props = defineProps<{ 
   formData?: any;
   id?: string;
 }>();
 
-// Navigation function
-function goBackToBuilder() {
-  if (props.id) {
-    router.push(`/builder/${props.id}`);
-  } else {
-    router.push('/forms');
-  }
-}
-
-// Form values and state
+// Form state
 const formValues = ref<Record<string, any>>({});
 const fieldVisibility = ref<Record<string, boolean>>({});
 const fieldReadOnly = ref<Record<string, boolean>>({});
 const fieldRequired = ref<Record<string, boolean>>({});
-const tabVisibility = ref<Record<number, boolean>>({});
 const sectionVisibility = ref<Record<string, boolean>>({});
 
-// Use passed formData if available, otherwise fallback to localStorage
+// Interactive layout state
+const activeTabIndex = ref(0);
+const expandedAccordions = ref<number[]>([0]); // First accordion expanded by default
+
+// Form data
 const formData = ref(props.formData || { 
   metadata: {
     formName: '',
@@ -137,33 +209,59 @@ const formData = ref(props.formData || {
   tabs: [] 
 });
 
-const formMetadata = computed(() => formData.value.metadata || {});
-const hasFormContent = computed(() => formData.value?.tabs?.length > 0);
-const fileInput = ref<HTMLInputElement | null>(null);
+// Computed properties
+const formMetadata = computed(() => formData.value?.metadata || {});
+const formTabs = computed(() => formData.value?.tabs || []);
+const formLayout = computed(() => formData.value?.layout || formData.value?.metadata?.formLayout || 'tabs');
 
-// Watch for changes in form values and re-evaluate formulas
-watch(formValues, () => {
-  evaluateAllFormulas();
-}, { deep: true });
+const hasFormContent = computed(() => {
+  return formTabs.value.length > 0 && 
+         formTabs.value.some((tab: any) => 
+           tab.sections && tab.sections.length > 0 &&
+           tab.sections.some((section: any) => 
+             section.rows && section.rows.length > 0 &&
+             section.rows.some((row: any) => 
+               row.columns && row.columns.length > 0 &&
+               row.columns.some((col: any) => col.fields && col.fields.length > 0)
+             )
+           )
+         );
+});
 
-// Watch for formData changes
-watch(() => props.formData, (newData) => {
-  if (newData) {
-    formData.value = newData;
-    initializeFormValues();
+const visibleTabs = computed(() => {
+  return formTabs.value.filter(() => !isTabHidden());
+});
+
+// Current active tab
+const currentTab = computed(() => {
+  return visibleTabs.value[activeTabIndex.value] || null;
+});
+
+// Interactive layout methods
+function toggleAccordion(index: number) {
+  const accordionIndex = expandedAccordions.value.indexOf(index);
+  if (accordionIndex > -1) {
+    expandedAccordions.value.splice(accordionIndex, 1);
+  } else {
+    expandedAccordions.value.push(index);
   }
-}, { immediate: true });
-
-// Form value handling functions
-function getFieldValue(field: any) {
-  // Return calculated value or stored value
-  return formValues.value[field.name] !== undefined 
-    ? formValues.value[field.name] 
-    : field.defaultValue || '';
 }
 
+// Helper functions
+function isTabHidden(): boolean {
+  return false; // For preview, show all tabs
+}
+
+function isFieldHidden(fieldId: string): boolean {
+  return fieldVisibility.value[fieldId] === false;
+}
+
+function isFieldRequired(field: any): boolean {
+  return fieldRequired.value[field.id] === true || field.required === true;
+}
+
+// Form value handling functions
 function updateFieldValue(field: any, value: any) {
-  // Don't update calculated fields directly
   const hasActiveCalculation = field.formulas && field.formulas.some((f: Formula) => 
     f.type === 'calculation' && f.enabled
   );
@@ -171,29 +269,6 @@ function updateFieldValue(field: any, value: any) {
   if (!hasActiveCalculation) {
     formValues.value[field.name] = value;
   }
-}
-
-// Visibility helpers
-function isTabHidden(tabIndex: number): boolean {
-  return tabVisibility.value[tabIndex] === false;
-}
-
-function isSectionHidden(sectionId: string): boolean {
-  return sectionVisibility.value[sectionId] === false;
-}
-
-function isFieldHidden(fieldId: string): boolean {
-  return fieldVisibility.value[fieldId] === false;
-}
-
-function isFieldReadOnly(field: any): boolean {
-  // Check if field has a readonly formula that evaluates to true
-  return fieldReadOnly.value[field.id] === true || field.isReadonly === true;
-}
-
-function isFieldRequired(field: any): boolean {
-  // Check both static required property and formula-based required state
-  return fieldRequired.value[field.id] === true || field.required === true;
 }
 
 // Form submission
@@ -218,283 +293,520 @@ const submitForm = () => {
   }
   
   // Form submission logic
-  alert('Form submitted with values: ' + JSON.stringify(formValues.value));
+  alert('Form submitted successfully!');
 };
 
-// Import form
-const importForm = () => {
-  // Create a hidden file input element
-  if (!fileInput.value) {
-    fileInput.value = document.createElement('input');
-    fileInput.value.type = 'file';
-    fileInput.value.accept = 'application/json';
-    
-    fileInput.value.addEventListener('change', (event) => {
-      const target = event.target as HTMLInputElement;
-      if (target.files && target.files.length > 0) {
-        const file = target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = (e) => {
-          try {
-            const result = e.target?.result as string;
-            formData.value = JSON.parse(result);
-            localStorage.setItem('savedFormStructure', result);
-            initializeFormValues();
-          } catch (error) {
-            alert('Invalid form file format');
-          }
-        };
-        
-        reader.readAsText(file);
-      }
-    });
-  }
-  
-  // Trigger the file input
-  fileInput.value.click();
-};
-
-// Collect all fields from the form
-function getAllFormFields(): any[] {
+// Get all form fields
+function getAllFormFields() {
   const allFields: any[] = [];
   
-  if (!formData.value?.tabs) return allFields;
-  
-  formData.value.tabs.forEach((tab: any) => {
-    if (!tab.sections) return;
-    
-    tab.sections.forEach((section: any) => {
-      if (section.rows) {
-        section.rows.forEach((row: any) => {
-          row.columns.forEach((column: any) => {
-            if (column.fields && Array.isArray(column.fields)) {
-              allFields.push(...column.fields);
+  formTabs.value.forEach((tab: any) => {
+    if (tab.sections) {
+      tab.sections.forEach((section: any) => {
+        if (section.rows) {
+          section.rows.forEach((row: any) => {
+            if (row.columns) {
+              row.columns.forEach((column: any) => {
+                if (column.fields) {
+                  allFields.push(...column.fields);
+                }
+              });
             }
           });
-        });
-      } else if (section.columns) {
-        // For backward compatibility
-        section.columns.forEach((column: any) => {
-          if (column.fields && Array.isArray(column.fields)) {
-            allFields.push(...column.fields);
-          }
-        });
-      }
-    });
+        }
+      });
+    }
   });
   
   return allFields;
 }
 
-// Initialize form values and formula evaluation
-function initializeFormValues() {
+// Initialize form states
+function initializeFormStates() {
+  // Reset states
   formValues.value = {};
   fieldVisibility.value = {};
   fieldReadOnly.value = {};
   fieldRequired.value = {};
-  tabVisibility.value = {};
   sectionVisibility.value = {};
-  
-  // Initialize values for all fields
+
+  // Initialize field states
   const allFields = getAllFormFields();
   allFields.forEach(field => {
     // Set default values
-    formValues.value[field.name] = field.defaultValue || '';
+    if (field.defaultValue !== undefined) {
+      formValues.value[field.name] = field.defaultValue;
+    }
     
-    // Set default visibility (all visible)
-    fieldVisibility.value[field.id] = true;
-    
-    // Set default readonly state
+    // Set initial states
+    fieldVisibility.value[field.id] = !field.hidden;
     fieldReadOnly.value[field.id] = field.isReadonly || false;
-    
-    // Set default required state
     fieldRequired.value[field.id] = field.required || false;
   });
-  
-  // Initialize tab and section visibility
-  if (formData.value?.tabs) {
-    formData.value.tabs.forEach((tab: any, index: number) => {
-      tabVisibility.value[index] = true;
-      
-      if (tab.sections) {
-        tab.sections.forEach((section: any) => {
-          sectionVisibility.value[section.id] = true;
-        });
-      }
-    });
-  }
-  
-  // Evaluate all formulas after initialization
+
+  // Initialize visibility based on formulas
   evaluateAllFormulas();
 }
 
-// Evaluate all formula types for fields, tabs, and sections
+// Evaluate all formulas
 function evaluateAllFormulas() {
   const allFields = getAllFormFields();
   
-  // First, process fields with calculation formulas to update values
-  processCalculationFormulas(allFields);
-  
-  // Then process visibility, readonly, and required formulas
-  processOtherFormulas(allFields);
-  
-  // Finally, process tab and section visibility formulas
-  processTabAndSectionFormulas();
-}
-
-function processCalculationFormulas(fields: any[]) {
-  // Process fields with calculation formulas
-  fields.forEach(field => {
-    if (!field.formulas || !Array.isArray(field.formulas)) return;
-    
-    // Look for active calculation formula
-    const calcFormula = field.formulas.find((f: any) => f.type === 'calculation' && f.enabled);
-    if (calcFormula) {
-      try {
-        // Evaluate the calculation formula
-        const result = evaluateFormula(calcFormula.expression, formValues.value, 'calculation');
-        
-        // Update the field value with the calculation result
-        formValues.value[field.name] = result;
-      } catch (error) {
-        // Handle errors silently in preview mode
-      }
+  allFields.forEach(field => {
+    if (field.formulas && field.formulas.length > 0) {
+      field.formulas.forEach((formula: Formula) => {
+        if (formula.enabled) {
+          try {
+            const result = evaluateFormula(formula.expression, formValues.value);
+            
+            switch (formula.type) {
+              case 'visibility':
+                fieldVisibility.value[field.id] = Boolean(result);
+                break;
+              case 'required':
+                fieldRequired.value[field.id] = Boolean(result);
+                break;
+              case 'readonly':
+                fieldReadOnly.value[field.id] = Boolean(result);
+                break;
+              case 'calculation':
+                if (!(field.name in formValues.value)) {
+                  formValues.value[field.name] = result;
+                }
+                break;
+            }
+          } catch (error) {
+            // Error evaluating formula - handle silently in preview
+          }
+        }
+      });
     }
   });
 }
 
-function processOtherFormulas(fields: any[]) {
-  // Process other formula types (visibility, readonly, required)
-  fields.forEach(field => {
-    if (!field.formulas || !Array.isArray(field.formulas)) return;
-    
-    // Process each non-calculation formula
-    field.formulas.forEach((formula: any) => {
-      if (!formula.enabled || formula.type === 'calculation') return;
-      
-      try {
-        const result = evaluateFormula(formula.expression, formValues.value, formula.type as any);
-        
-        switch (formula.type) {
-          case 'visibility':
-            fieldVisibility.value[field.id] = Boolean(result);
-            break;
-          case 'readonly':
-            fieldReadOnly.value[field.id] = Boolean(result);
-            break;
-          case 'required':
-            fieldRequired.value[field.id] = Boolean(result);
-            break;
-        }
-      } catch (error) {
-        // Handle errors silently in preview mode
-      }
-    });
-  });
-}
+// Watch for form data changes
+watch(() => props.formData, (newData) => {
+  if (newData) {
+    formData.value = newData;
+    initializeFormStates();
+  }
+}, { immediate: true });
 
-function processTabAndSectionFormulas() {
-  // Process tab visibility formulas
-  if (formData.value?.tabs) {
-    formData.value.tabs.forEach((tab: any, index: number) => {
-      if (!tab.formulas || !Array.isArray(tab.formulas)) return;
-      
-      // Look for active visibility formula for the tab
-      const visibilityFormula = tab.formulas.find(
-        (f: any) => f.type === 'visibility' && f.enabled
-      );
-      
-      if (visibilityFormula) {
-        try {
-          const isVisible = evaluateFormula(
-            visibilityFormula.expression, 
-            formValues.value, 
-            'visibility'
-          );
-          tabVisibility.value[index] = Boolean(isVisible);
-        } catch (error) {
-          // Handle errors silently in preview mode
-        }
-      }
-      
-      // Process section visibility formulas
-      if (tab.sections) {
-        tab.sections.forEach((section: any) => {
-          if (!section.formulas || !Array.isArray(section.formulas)) return;
-          
-          // Look for active visibility formula for the section
-          const sectionVisibilityFormula = section.formulas.find(
-            (f: any) => f.type === 'visibility' && f.enabled
-          );
-          
-          if (sectionVisibilityFormula) {
-            try {
-              const isVisible = evaluateFormula(
-                sectionVisibilityFormula.expression, 
-                formValues.value, 
-                'visibility'
-              );
-              sectionVisibility.value[section.id] = Boolean(isVisible);
-            } catch (error) {
-              // Handle errors silently in preview mode
-            }
-          }
-        });
-      }
-    });
-  }
-}
-
-// Get CSS classes for a field
-function getFieldClasses(field: any) {
-  const classes = ['mb-4'];
-  
-  // Add custom CSS classes if specified
-  if (field.cssClasses) {
-    classes.push(...field.cssClasses.split(' ').filter((cls: any) => cls.trim()));
-  }
-  
-  return classes;
-}
-
-// Get inline styles for a field
-function getFieldStyles(field: any) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const styles: any = {};
-  
-  // Apply padding styles
-  if (field.padding) {
-    if (field.padding.top) styles.paddingTop = field.padding.top;
-    if (field.padding.right) styles.paddingRight = field.padding.right;
-    if (field.padding.bottom) styles.paddingBottom = field.padding.bottom;
-    if (field.padding.left) styles.paddingLeft = field.padding.left;
-  }
-  
-  // Apply margin styles
-  if (field.margin) {
-    if (field.margin.top) styles.marginTop = field.margin.top;
-    if (field.margin.right) styles.marginRight = field.margin.right;
-    if (field.margin.bottom) styles.marginBottom = field.margin.bottom;
-    if (field.margin.left) styles.marginLeft = field.margin.left;
-  }
-  
-  return styles;
-}
+// Watch for form values changes to re-evaluate formulas
+watch(formValues, () => {
+  evaluateAllFormulas();
+}, { deep: true });
 
 onMounted(() => {
-  if (!props.formData) {
-    const savedForm = localStorage.getItem('savedFormStructure');
-    if (savedForm) {
-      try {
-        formData.value = JSON.parse(savedForm);
-      } catch (error) {
-        alert('Error loading saved form data');
-      }
-    }
-  }
-  
-  // Initialize form values and evaluate formulas
-  initializeFormValues();
+  initializeFormStates();
 });
 </script>
+
+<style scoped>
+/* 
+ * Z-Index Stacking Order:
+ * - Field Selector Sidebar: 250 (when adding fields)
+ * - Field Selector Backdrop: 240
+ * - Sidebar menu items: 210
+ * - Sidebar nav: 200
+ * - Sidebar layout & content: 150
+ * - Top action bar: 100 (from FormBuilder)
+ * - Accordion headers active: 60
+ * - Paper form: 50
+ */
+
+.form-preview-container {
+  padding: 16px;
+  background: #f8f9fa;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.paper-form {
+  background: white;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 12px;
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  position: relative;
+  z-index: 50;
+}
+
+.form-header {
+  padding: 28px 40px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+}
+
+.form-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 6px 0;
+  line-height: 1.3;
+}
+
+.form-description {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.form-content {
+  width: 100%;
+}
+
+/* Tabs Layout */
+.form-tabs-layout {
+  width: 100%;
+}
+
+.tabs-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 0 40px;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+}
+
+.tab-button {
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: #64748b;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  color: var(--primary);
+  background: var(--primary-light, rgba(23, 23, 23, 0.05));
+}
+
+.tab-button.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: white;
+}
+
+.tab-content {
+  padding: 32px 40px;
+}
+
+.tab-sections {
+  width: 100%;
+}
+
+/* Accordion Layout */
+.form-accordion-layout {
+  width: 100%;
+}
+
+.accordion-item {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.accordion-item:last-child {
+  border-bottom: none;
+}
+
+.accordion-header {
+  width: 100%;
+  padding: 20px 40px;
+  background: #fafbfc;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.accordion-header:hover {
+  background: #f1f5f9;
+}
+
+.accordion-header.active {
+  background: white;
+  color: var(--primary);
+  border-left: 4px solid var(--primary);
+  position: relative;
+  z-index: 60;
+}
+
+.accordion-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.accordion-header i {
+  font-size: 0.9rem;
+  transition: transform 0.2s ease;
+}
+
+.accordion-content {
+  padding: 32px 40px;
+  background: white;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sidebar Layout */
+.form-sidebar-layout {
+  display: flex;
+  width: 100%;
+  min-height: 500px;
+  position: relative;
+  z-index: 150;
+}
+
+.sidebar-nav {
+  width: 280px;
+  background: #f8f9fa;
+  border-right: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  z-index: 200;
+  position: relative;
+}
+
+.sidebar-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.sidebar-menu {
+  padding: 16px 0;
+}
+
+.sidebar-menu-item {
+  width: 100%;
+  padding: 12px 24px;
+  background: transparent;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  color: #64748b;
+  font-weight: 500;
+  position: relative;
+  z-index: 210;
+}
+
+.sidebar-menu-item:hover {
+  background: var(--primary-light, rgba(23, 23, 23, 0.05));
+  color: var(--primary);
+}
+
+.sidebar-menu-item.active {
+  background: var(--primary);
+  color: white;
+}
+
+.sidebar-item-label {
+  flex: 1;
+  text-align: left;
+}
+
+.page-indicator {
+  background: rgba(100, 116, 139, 0.2);
+  color: #64748b;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 24px;
+  text-align: center;
+}
+
+.sidebar-menu-item.active .page-indicator {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar-content {
+  flex: 1;
+  background: white;
+  position: relative;
+  z-index: 150;
+}
+
+.page-header {
+  padding: 28px 40px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #fafbfc;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a202c;
+  margin: 0 0 8px 0;
+}
+
+.page-meta {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.page-sections {
+  padding: 32px 40px;
+}
+
+/* Form Footer */
+.form-footer {
+  padding: 24px 40px;
+  background: #fafbfc;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+}
+
+.submit-button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(23, 23, 23, 0.2);
+  min-width: 120px;
+}
+
+.submit-button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(23, 23, 23, 0.3);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+}
+
+/* Empty State */
+.empty-form {
+  text-align: center;
+  padding: 80px 40px;
+  color: #64748b;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+  opacity: 0.3;
+}
+
+.empty-form h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+  color: #374151;
+}
+
+.empty-form p {
+  font-size: 1rem;
+  margin: 0;
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-preview-container {
+    padding: 16px;
+  }
+  
+  .form-header,
+  .tab-content,
+  .accordion-content,
+  .page-sections {
+    padding: 20px;
+  }
+  
+  .form-footer {
+    padding: 20px;
+  }
+  
+  .form-sidebar-layout {
+    flex-direction: column;
+  }
+  
+  .sidebar-nav {
+    width: 100%;
+    order: 2;
+  }
+  
+  .sidebar-content {
+    order: 1;
+  }
+  
+  .tabs-container {
+    padding: 0 16px;
+  }
+  
+  .tab-button {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media print {
+  .form-preview-container {
+    padding: 0;
+    background: white;
+  }
+  
+  .paper-form {
+    box-shadow: none;
+    border-radius: 0;
+  }
+  
+  .tabs-header,
+  .accordion-header,
+  .sidebar-nav {
+    display: none;
+  }
+  
+  .tab-content,
+  .accordion-content,
+  .page-sections {
+    padding: 20px 0;
+  }
+  
+  .form-footer {
+    display: none;
+  }
+}
+</style>

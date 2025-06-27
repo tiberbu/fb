@@ -27,6 +27,13 @@
   box-shadow: var(--shadow-xs);
 }
 
+/* Ensure button icons inherit button color */
+.btn i, .action-btn i, .add-field-button i, .add-section-button i, 
+.add-column-button i, .add-row-button i, .add-tab-button i, .field-type-button i,
+button i {
+  color: inherit !important;
+}
+
 /* Hover state */
 .btn:hover, .action-btn:hover, .add-field-button:hover, .add-section-button:hover, 
 .add-column-button:hover, .add-row-button:hover, .add-tab-button:hover, .field-type-button:hover {

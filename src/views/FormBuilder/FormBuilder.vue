@@ -275,6 +275,7 @@ function previewForm() {
 // Get form data formatted for preview component
 function getFormData() {
   return {
+    layout: formLayout.value, // Add layout at root level for FormPreview
     metadata: {
       formName: formName.value,
       formDescription: formDescription.value,
