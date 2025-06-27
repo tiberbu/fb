@@ -63,6 +63,7 @@ const fieldTypes = [
   { type: "time", label: "Time" },
   { type: "file", label: "File Upload" },
   { type: "image", label: "Image Upload" },
+  { type: "table", label: "Table" },
   { type: "range", label: "Range/Slider" },
   { type: "color", label: "Color Picker" },
   { type: "link", label: "Link" },
@@ -125,6 +126,8 @@ function getIconForFieldType(type: string) {
       return 'fa-file-upload';
     case 'image':
       return 'fa-image';
+    case 'table':
+      return 'fa-table';
     case 'range':
       return 'fa-sliders-h';
     case 'color':
@@ -177,6 +180,8 @@ function getFieldTypeDescription(type: string) {
       return 'File upload field';
     case 'image':
       return 'Image upload field';
+    case 'table':
+      return 'Table with columns from another form';
     case 'range':
       return 'Range slider input';
     case 'color':

@@ -23,7 +23,7 @@
         <!-- This would contain the actual field control based on the field type -->
         <!-- For now, we'll just show a placeholder -->
         <div class="placeholder-control">
-          {{ field.df.fieldtype || 'Text Field' }}
+          {{ field.df.fieldtype || field.type || 'Text Field' }}
         </div>
       </div>
     </div>

@@ -71,6 +71,7 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
     { type: "hidden", label: "Read Only" },
     { type: "divider", label: "Divider" },
     { type: "html", label: "HTML Content" },
+    { type: "table", label: "Table" },
   ];
 
   const isDirty = ref(false);
@@ -468,6 +469,14 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
           right: '',
           bottom: '',
           left: ''
+        },
+        // Add df property for compatibility with Field component
+        df: {
+          fieldtype: type === 'table' ? 'Table' : type.charAt(0).toUpperCase() + type.slice(1),
+          fieldname: `field_${type}_${Date.now()}`,
+          label: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+          name: `field_${type}_${Date.now()}`,
+          isCustomField: 1
         }
       };
       
@@ -934,6 +943,8 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
         return 'fa-minus';
       case 'html':
         return 'fa-code';
+      case 'table':
+        return 'fa-table';
       default:
         return 'fa-square';
     }
@@ -985,6 +996,8 @@ export function useFormBuilderComposable(emit: any, formIdProp?: string) {
         return 'Visual separator';
       case 'html':
         return 'Custom HTML content';
+      case 'table':
+        return 'Data table with linked form fields';
       default:
         return 'Input field';
     }

@@ -119,7 +119,7 @@
       
       <!-- Placeholder Accordion (for text-like fields) -->
       <AccordionSection 
-        v-if="['text', 'textarea', 'number', 'date', 'link'].includes(controlCopy.type)" 
+        v-if="controlCopy && ['text', 'textarea', 'number', 'date', 'link'].includes(controlCopy.type)" 
         title="Placeholder Settings"
       >
         <div class="mb-4">
@@ -134,7 +134,7 @@
       
       <!-- Options Accordion (for select fields) -->
       <AccordionSection 
-        v-if="controlCopy.type === 'select'" 
+        v-if="controlCopy && controlCopy.type === 'select'" 
         title="Options Configuration"
       >
         <div class="mb-4">
@@ -172,6 +172,13 @@
           </button>
         </div>
       </AccordionSection>
+      
+      <!-- Table Control Properties -->
+      <TableControlProperties
+        v-if="controlCopy && controlCopy.type === 'table'"
+        :control="controlCopy"
+        @update="updateTableControl"
+      />
       
       <!-- Enhanced Formula Settings Accordion -->
       <AccordionSection title="Field Formulas">
@@ -364,6 +371,7 @@ import { confirmDialog } from '../../utils/form-builder-utils';
 import FormulaEditor from './FormulaEditor.vue';
 import FormulaManager from './FormulaManager.vue';
 import AccordionSection from './AccordionSection.vue';
+import TableControlProperties from './TableControlProperties.vue';
 
 const props = defineProps({
   control: {
@@ -578,6 +586,11 @@ function updateControl() {
     // Clear selected field
     store.form.selectedField = null;
   }
+}
+
+// Update table control properties
+function updateTableControl(updatedControl: Control) {
+  controlCopy.value = updatedControl;
 }
 
 // Delete the field
