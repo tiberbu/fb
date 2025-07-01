@@ -85,6 +85,8 @@ const visibleSections = computed(() => {
 
 // Helper functions
 function isSectionHidden(sectionId: string): boolean {
+  // A section is hidden if explicitly set to false in sectionVisibility
+  // If not defined in sectionVisibility, default to visible (true)
   return props.sectionVisibility[sectionId] === false;
 }
 
