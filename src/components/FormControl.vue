@@ -6,7 +6,7 @@
   >
     <!-- General label for all controls except table (table has its own label) -->
     <div 
-      v-if="control.label && control.type !== 'table'" 
+      v-if="control.label && control.type !== 'table' && showLabel" 
       class="field-label mb-1"
     >
       {{ control.label }}
@@ -379,14 +379,22 @@ import type { Control } from '../types';
 import { computed } from 'vue';
 import TableControl from './controls/TableControl.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   control: Control;
   modelValue?: any;
   isRequired?: boolean;
   isReadOnly?: boolean;
   error?: string;
   isPreview?: boolean;
-}>();
+  showLabel?: boolean;
+}>(), {
+  modelValue: undefined,
+  isRequired: false,
+  isReadOnly: false,
+  error: undefined,
+  isPreview: false,
+  showLabel: true
+});
 
 const emit = defineEmits<{
   'update:modelValue': [value: any];
@@ -526,6 +534,7 @@ function getFieldStyles() {
   border: none !important;
   padding: 0 !important;
   background: transparent !important;
+  margin-bottom: 0 !important;
 }
 
 .form-control-preview:focus {
