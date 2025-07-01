@@ -1,7 +1,7 @@
 {
-  "name": "frappe-form-builder",
+  "name": "tf-builder",
   "version": "1.0.0",
-  "description": "A Vue 3 based form builder application.",
+  "description": "A Vue 3 based TF Builder application for dynamic form creation.",
   "main": "src/main.ts",
   "scripts": {
     "dev": "vite",

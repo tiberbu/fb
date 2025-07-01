@@ -332,9 +332,8 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted } from 'vue'
-import type { ControlType } from '@/types'
+import type { ControlType, Control } from '@/types'
 import { StoredFieldsAPI } from '@/services/StoredFieldsAPI'
-import { useFormBuilderStore } from '@/stores/form-builder-store'
 import { useToast } from '@/composables/useToast'
 
 interface FieldType {
@@ -351,6 +350,10 @@ interface StoredField {
   tags?: string[]
   usageCount: number
   configuration: any
+  fieldData: Control
+  createdBy: string
+  createdAt: string
+  updatedAt: string
 }
 
 interface Props {
@@ -359,6 +362,7 @@ interface Props {
 
 interface Emits {
   (e: 'select-field-type', fieldType: ControlType): void
+  (e: 'select-stored-field', control: Control): void
   (e: 'close'): void
 }
 
@@ -366,7 +370,6 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 // Composables
-const formBuilderStore = useFormBuilderStore()
 const { success: showToast } = useToast()
 
 // Keep reference to props for potential future use
@@ -467,13 +470,39 @@ const selectFieldType = (fieldType: ControlType) => {
 
 const selectStoredField = async (field: StoredField) => {
   try {
-    // Add the stored field to the form with its full configuration
-    formBuilderStore.addField({
-      id: `field_${Date.now()}`,
-      type: field.type as ControlType,
-      label: field.label,
-      ...field.configuration
-    })
+    // Check if fieldData exists, otherwise fall back to configuration
+    let controlData
+    if (field.fieldData) {
+      controlData = field.fieldData
+    } else if (field.configuration) {
+      // Fallback to configuration if fieldData doesn't exist
+      controlData = {
+        type: field.type,
+        label: field.label,
+        name: field.name,
+        required: false,
+        ...field.configuration
+      }
+    } else {
+      // Create basic control from field properties
+      controlData = {
+        type: field.type,
+        label: field.label,
+        name: field.name,
+        required: false
+      }
+    }
+    
+    // Use the stored fieldData which contains the complete Control configuration
+    const control: Control = {
+      ...controlData,
+      id: `field_${Date.now()}`, // Generate new unique ID
+      name: controlData.name || `field_${Date.now()}`, // Ensure we have a name
+      order: 0 // Reset order for new field
+    }
+
+    // Emit the stored field selection to parent component
+    emit('select-stored-field', control)
 
     // Track usage
     await StoredFieldsAPI.markFieldAsUsed(field._id)

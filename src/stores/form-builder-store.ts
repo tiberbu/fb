@@ -279,18 +279,57 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
 
   // Add field from stored configuration
   function addField(control: Control) {
+    console.log('addField called with:', control)
+    console.log('currentTab.value:', currentTab.value)
+    
     // This would add the field to the current form
     // Implementation depends on your form structure
     if (currentTab.value && currentTab.value.sections.length > 0) {
       const firstSection = currentTab.value.sections[0];
+      console.log('firstSection:', firstSection)
+      
       if (firstSection.columns && firstSection.columns.length > 0) {
         const firstColumn = firstSection.columns[0];
+        console.log('firstColumn before:', firstColumn)
+        
         if (!firstColumn.fields) {
           firstColumn.fields = [];
         }
-        firstColumn.fields.push(control);
+        
+        // Convert Control to Field format expected by the form builder
+        const field = {
+          df: {
+            name: control.name || control.id,
+            fieldtype: control.type,
+            fieldname: control.name || control.id,
+            label: control.label,
+            description: control.description,
+            reqd: control.required || false,
+            readOnly: false, // Default value since Control doesn't have isReadonly
+            hidden: false,   // Default value since Control doesn't have isHidden
+            options: control.options?.map(opt => typeof opt === 'string' ? opt : opt.label || opt.value).join('\n') || '',
+            placeholder: control.placeholder,
+            rows: control.rows,
+            default: control.defaultValue,
+            min: control.min,
+            max: control.max,
+            step: control.step,
+            accept: control.accept,
+            multiple: control.multiple
+          },
+          name: control.name || control.id
+        };
+        
+        console.log('Generated field:', field)
+        firstColumn.fields.push(field);
+        console.log('firstColumn after:', firstColumn)
         dirty.value = true;
+        console.log('Field added successfully')
+      } else {
+        console.log('No columns found in first section')
       }
+    } else {
+      console.log('No currentTab or sections found')
     }
   }
 

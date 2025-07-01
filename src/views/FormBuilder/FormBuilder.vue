@@ -161,6 +161,7 @@
     <FieldSelectorSidebar
       :is-open="showFieldSelector"
       @select-field-type="handleFieldTypeSelected"
+      @select-stored-field="handleStoredFieldSelected"
       @close="closeFieldSelector"
     />
     
@@ -224,6 +225,7 @@ const {
   filteredFieldTypes,
   
   // Methods
+  emitFormDataChange,
   openTabProperties,
   toggleSidebar,
   closeSidebar,
@@ -312,6 +314,27 @@ function handleFieldTypeSelected(type: ControlType) {
     const section = currentTabSections.value.find(s => s.id === activeSection.value);
     if (section) {
       addFieldToColumn(section, activeRowIndex.value, activeColumn.value, type);
+    }
+  }
+}
+
+// Handle stored field selection from sidebar
+function handleStoredFieldSelected(control: any) {
+  if (activeSection.value !== null && activeRowIndex.value !== null && activeColumn.value !== null) {
+    // Find the section object
+    const section = currentTabSections.value.find(s => s.id === activeSection.value);
+    if (section) {
+      // Add the stored field directly to the column
+      if (!section.rows[activeRowIndex.value].columns[activeColumn.value].fields) {
+        section.rows[activeRowIndex.value].columns[activeColumn.value].fields = [];
+      }
+      
+      // Update the order based on current field count
+      control.order = (section.rows[activeRowIndex.value].columns[activeColumn.value].fields?.length || 0) + 1;
+      
+      section.rows[activeRowIndex.value].columns[activeColumn.value].fields.push(control);
+      closeFieldSelector();
+      emitFormDataChange();
     }
   }
 }

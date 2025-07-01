@@ -1,14 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/login',
+      name: 'Login',
+      component: () => import('../views/Login.vue'),
+      meta: {
+        title: 'Login',
+        requiresGuest: true
+      }
+    },
+    {
       path: '/',
       name: 'Dashboard',
       component: () => import('../views/Dashboard.vue'),
       meta: {
-        title: 'Dashboard'
+        title: 'Dashboard',
+        requiresAuth: true
       }
     },
     {
@@ -16,7 +27,8 @@ const router = createRouter({
       name: 'FormsManagement',
       component: () => import('../views/FormsManagement.vue'),
       meta: {
-        title: 'Forms Management'
+        title: 'Forms Management',
+        requiresAuth: true
       }
     },
     {
@@ -24,7 +36,8 @@ const router = createRouter({
       name: 'FormBuilder',
       component: () => import('../views/FormBuilder.vue'),
       meta: {
-        title: 'Form Builder'
+        title: 'Form Builder',
+        requiresAuth: true
       }
     },
     {
@@ -33,7 +46,8 @@ const router = createRouter({
       component: () => import('../views/FormBuilder.vue'),
       props: true,
       meta: {
-        title: 'Form Builder'
+        title: 'Form Builder',
+        requiresAuth: true
       }
     },
     {
@@ -42,7 +56,8 @@ const router = createRouter({
       component: () => import('../views/FormBuilder.vue'),
       props: true,
       meta: {
-        title: 'Edit Form'
+        title: 'Edit Form',
+        requiresAuth: true
       }
     },
     {
@@ -51,7 +66,8 @@ const router = createRouter({
       component: () => import('../views/FormPreview.vue'),
       props: true,
       meta: {
-        title: 'Form Preview'
+        title: 'Form Preview',
+        requiresAuth: true
       }
     },
     {
@@ -59,7 +75,8 @@ const router = createRouter({
       name: 'SubmissionsOverview',
       component: () => import('../views/SubmissionsOverview.vue'),
       meta: {
-        title: 'Submissions Overview'
+        title: 'Submissions Overview',
+        requiresAuth: true
       }
     },
     {
@@ -68,7 +85,8 @@ const router = createRouter({
       component: () => import('../views/FormSubmissions.vue'),
       props: true,
       meta: {
-        title: 'Form Submissions'
+        title: 'Form Submissions',
+        requiresAuth: true
       }
     },
     {
@@ -77,7 +95,8 @@ const router = createRouter({
       component: () => import('../views/SubmissionDetail.vue'),
       props: true,
       meta: {
-        title: 'Submission Details'
+        title: 'Submission Details',
+        requiresAuth: true
       }
     },
     {
@@ -85,7 +104,18 @@ const router = createRouter({
       name: 'Analytics',
       component: () => import('../views/Analytics.vue'),
       meta: {
-        title: 'Analytics'
+        title: 'Analytics',
+        requiresAuth: true
+      }
+    },
+    {
+      path: '/analytics/users',
+      name: 'UserManagement',
+      component: () => import('../views/UserManagement.vue'),
+      meta: {
+        title: 'User Management',
+        requiresAuth: true,
+        requiresAdmin: true
       }
     },
     {
@@ -93,15 +123,46 @@ const router = createRouter({
       name: 'Settings',
       component: () => import('../views/Settings.vue'),
       meta: {
-        title: 'Settings'
+        title: 'Settings',
+        requiresAuth: true
       }
     }
   ]
 })
 
+// Authentication guard
+router.beforeEach(async (to, from, next) => {
+  const authStore = useAuthStore()
+  
+  // Initialize auth if not already done
+  if (!authStore.user && authStore.token) {
+    await authStore.initializeAuth()
+  }
+  
+  // Check if route requires authentication
+  if (to.meta.requiresAuth && !authStore.isAuthenticated) {
+    next({ name: 'Login', query: { redirect: to.fullPath } })
+    return
+  }
+  
+  // Check if route requires admin access
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    next({ name: 'Dashboard' })
+    return
+  }
+  
+  // Redirect authenticated users away from guest pages
+  if (to.meta.requiresGuest && authStore.isAuthenticated) {
+    next({ name: 'Dashboard' })
+    return
+  }
+  
+  next()
+})
+
 // Update document title based on route
-router.beforeEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} - Form Builder` : 'Form Builder';
+router.afterEach((to) => {
+  document.title = to.meta.title ? `${to.meta.title} - TF Builder` : 'TF Builder';
 })
 
 export default router

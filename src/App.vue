@@ -1,11 +1,19 @@
 <template>
-  <div class="app-layout">
+  <div v-if="!authStore.isAuthenticated" class="min-h-screen">
+    <router-view />
+  </div>
+  
+  <div v-else class="app-layout">
     <!-- Sidebar Navigation -->
     <aside class="app-sidebar">
       <div class="app-sidebar-header">
         <h2 class="app-title">
-          <i class="fas fa-clipboard-list" />
-          Form Builder
+          <img 
+            src="/logo-icon.svg" 
+            alt="TF Builder" 
+            class="app-logo"
+          >
+          TF Builder
         </h2>
       </div>
       
@@ -46,6 +54,17 @@
           <span>Analytics</span>
         </router-link>
         
+        <!-- User Management for Admins -->
+        <router-link 
+          v-if="authStore.isAdmin"
+          to="/analytics/users" 
+          class="nav-item nav-item-sub"
+          active-class="nav-item-active"
+        >
+          <i class="fas fa-users" />
+          <span>User Management</span>
+        </router-link>
+        
         <div class="nav-divider" />
         
         <router-link 
@@ -57,6 +76,27 @@
           <span>Settings</span>
         </router-link>
       </nav>
+
+      <!-- User Menu -->
+      <div class="app-sidebar-footer">
+        <div class="user-menu" @click="showUserMenu = !showUserMenu">
+          <div class="user-avatar">
+            {{ authStore.user?.username.charAt(0).toUpperCase() }}
+          </div>
+          <div class="user-info">
+            <div class="user-name">{{ authStore.user?.username }}</div>
+            <div class="user-role">{{ authStore.user?.role }}</div>
+          </div>
+          <i class="fas fa-chevron-up" :class="{ 'rotate-180': showUserMenu }" />
+        </div>
+        
+        <div v-if="showUserMenu" class="user-dropdown">
+          <button @click="logout" class="dropdown-item">
+            <i class="fas fa-sign-out-alt" />
+            Logout
+          </button>
+        </div>
+      </div>
     </aside>
     
     <!-- Main Content Area -->
@@ -101,15 +141,28 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useFormCreation } from '@/composables/useFormCreation'
+import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 import ToastNotification from '@/components/ui/ToastNotification.vue'
 import './assets/css/form-builder-enhanced.css'
 import './assets/css/form-inputs.css'
 
 const route = useRoute()
+const router = useRouter()
+const authStore = useAuthStore()
 const { createNewForm } = useFormCreation()
+const { success } = useToast()
+
+// Component state
+const showUserMenu = ref(false)
+
+// Initialize auth on app load
+onMounted(async () => {
+  await authStore.initializeAuth()
+})
 
 const pageTitle = computed(() => {
   switch (route.name) {
@@ -118,7 +171,7 @@ const pageTitle = computed(() => {
     case 'FormsManagement':
       return 'Forms Management'
     case 'FormBuilder':
-      return 'Form Builder'
+      return 'TF Builder'
     case 'SubmissionsOverview':
       return 'Submissions Overview'
     case 'FormSubmissions':
@@ -127,10 +180,12 @@ const pageTitle = computed(() => {
       return 'Submission Details'
     case 'Analytics':
       return 'Analytics'
+    case 'UserManagement':
+      return 'User Management'
     case 'Settings':
       return 'Settings'
     default:
-      return 'Form Builder'
+      return 'TF Builder'
   }
 })
 
@@ -150,6 +205,8 @@ const pageSubtitle = computed(() => {
       return 'Detailed view of submission'
     case 'Analytics':
       return 'Form performance and insights'
+    case 'UserManagement':
+      return 'Manage users and permissions'
     case 'Settings':
       return 'Application settings and preferences'
     default:
@@ -168,6 +225,13 @@ const isFormBuilderRoute = computed(() => {
 const navigateToCreate = async () => {
   await createNewForm()
 }
+
+const logout = async () => {
+  await authStore.logout()
+  success('Logged out successfully')
+  router.push('/login')
+  showUserMenu.value = false
+}
 </script>
 
 <style scoped>
@@ -185,6 +249,8 @@ const navigateToCreate = async () => {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
   z-index: 1000;
   border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-sidebar-header {
@@ -202,13 +268,15 @@ const navigateToCreate = async () => {
   color: #1f2937;
 }
 
-.app-title i {
-  font-size: 1.5rem;
-  color: #6b7280;
+.app-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+  color: #374151;
 }
 
 .app-sidebar-nav {
   padding: 1rem 0;
+  flex: 1;
 }
 
 .nav-item {
@@ -231,8 +299,13 @@ const navigateToCreate = async () => {
 .nav-item-active {
   background-color: #f3f4f6;
   color: #1f2937;
-  border-right: 3px solid #6b7280;
+  border-right: 3px solid #000000;
   font-weight: 600;
+}
+
+.nav-item-sub {
+  padding-left: 3rem;
+  font-size: 0.9rem;
 }
 
 .nav-item i {
@@ -244,6 +317,88 @@ const navigateToCreate = async () => {
   height: 1px;
   background: #e5e7eb;
   margin: 1rem 1.5rem;
+}
+
+/* User Menu Styles */
+.app-sidebar-footer {
+  border-top: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-menu:hover {
+  background-color: #f9fafb;
+}
+
+.user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #000000 0%, #374151 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 0.9rem;
+}
+
+.user-role {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: capitalize;
+}
+
+.user-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 1px solid #e5e7eb;
+  box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f9fafb;
+  color: #374151;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
 }
 
 /* Main Content Styles */

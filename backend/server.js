@@ -6,6 +6,8 @@ import connectDB from './config/database.js';
 import formConfigurationRoutes from './routes/formConfigurations.js';
 import formSubmissionRoutes from './routes/formSubmissions.js';
 import storedFieldRoutes from './routes/storedFields.js';
+import authRoutes from './routes/auth.js';
+import userRoutes from './routes/users.js';
 
 // Load environment variables
 dotenv.config();
@@ -43,15 +45,20 @@ app.get('/health', (req, res) => {
 app.use('/api/form-configurations', formConfigurationRoutes);
 app.use('/api/form-submissions', formSubmissionRoutes);
 app.use('/api/stored-fields', storedFieldRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
-    message: 'Form Builder Server API',
+    message: 'TF Builder Server API',
     version: '1.0.0',
     endpoints: {
       'Form Configurations': '/api/form-configurations',
       'Form Submissions': '/api/form-submissions',
+      'Authentication': '/api/auth',
+      'User Management': '/api/users',
+      'Stored Fields': '/api/stored-fields',
       'Health Check': '/health'
     }
   });
