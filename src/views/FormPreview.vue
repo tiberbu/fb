@@ -438,6 +438,8 @@ onMounted(() => {
   padding: 28px 40px 20px;
   border-bottom: 1px solid #e2e8f0;
   background: #fafbfc;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-title {
