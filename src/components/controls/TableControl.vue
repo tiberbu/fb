@@ -1140,7 +1140,7 @@ watch(linkedFormId, async (newFormId, oldFormId) => {
 }, { immediate: true });
 
 // Watch for changes in tableColumns and reinitialize nested table data
-watch(() => tableColumns.value, (newColumns) => {
+watch(() => tableColumns.value, () => {
   // Reinitialize nested table data for all existing rows when columns change
   tableData.value.forEach(row => {
     initializeNestedTableDataForRow(row);
@@ -1729,6 +1729,14 @@ function saveNestedTable() {
 }
 
 function closeNestedTableModal() {
+  showNestedTableModal.value = false;
+  currentNestedColumn.value = null;
+  nestedTableData.value = [];
+  nestedTableColumns.value = [];
+}
+
+// Add row to nested table
+async function addNestedTableRow(column: any) {
   // Initialize nested table data if it doesn't exist
   if (!currentRowData.value[column.name]) {
     currentRowData.value[column.name] = [];
