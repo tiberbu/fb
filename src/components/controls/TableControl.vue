@@ -146,7 +146,7 @@
               >
                 <i class="fas fa-table text-gray-300 text-sm mb-1" />
                 <div class="text-xs">
-                  No data
+                  No data ({{ typeof row[column.name] }}: {{ Array.isArray(row[column.name]) ? 'array' : 'not array' }})
                 </div>
               </div>
             </div>
@@ -534,7 +534,7 @@
     <!-- Nested Table Modal -->
     <div 
       v-if="showNestedTableModal" 
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-55"
       @click="closeNestedTableModal"
     >
       <div 
@@ -736,7 +736,7 @@
     <!-- Nested Table Row Modal (for adding/editing individual nested table rows) -->
     <div 
       v-if="showNestedRowModal" 
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-70"
       @click="closeNestedRowModal"
     >
       <div 
@@ -973,6 +973,9 @@ const showNestedRowModal = ref(false);
 const currentNestedRowData = ref<Record<string, any>>({});
 const editingNestedRowIndex = ref<number | null>(null);
 
+// Reactive trigger for nested table updates
+const nestedTableFieldsUpdateTrigger = ref(0);
+
 // Computed properties
 const linkedFormId = computed(() => {
   return props.df.linkedFormId;
@@ -1096,6 +1099,11 @@ const fieldClasses = computed(() => {
 watch(() => props.value, (newValue) => {
   if (newValue && Array.isArray(newValue)) {
     tableData.value = [...newValue];
+    
+    // Initialize nested table data for existing rows
+    tableData.value.forEach(row => {
+      initializeNestedTableDataForRow(row);
+    });
   } else {
     tableData.value = [];
   }
@@ -1105,6 +1113,11 @@ watch(() => props.value, (newValue) => {
 watch(() => props.df.tableData, (newTableData) => {
   if (newTableData && Array.isArray(newTableData) && newTableData.length > 0) {
     tableData.value = [...newTableData];
+    
+    // Initialize nested table data for existing rows
+    tableData.value.forEach(row => {
+      initializeNestedTableDataForRow(row);
+    });
   }
 }, { immediate: true });
 
@@ -1126,6 +1139,14 @@ watch(linkedFormId, async (newFormId, oldFormId) => {
   }
 }, { immediate: true });
 
+// Watch for changes in tableColumns and reinitialize nested table data
+watch(() => tableColumns.value, (newColumns) => {
+  // Reinitialize nested table data for all existing rows when columns change
+  tableData.value.forEach(row => {
+    initializeNestedTableDataForRow(row);
+  });
+}, { deep: true });
+
 // Watch for nested table columns with linkedFormId and fetch their fields
 watch(() => tableColumns.value, async (newColumns) => {
   // Check if any nested table columns have linkedFormId
@@ -1133,11 +1154,89 @@ watch(() => tableColumns.value, async (newColumns) => {
     if (column.type === 'table' && (column as any).linkedFormId) {
       const nestedLinkedFormId = (column as any).linkedFormId;
       // Fetch fields for nested table
-      await fetchLinkedFormFields(nestedLinkedFormId);
-      break; // For now, just handle the first one
+      await fetchLinkedFormFieldsForNestedTable(nestedLinkedFormId, column);
+      // Continue to handle all nested tables, not just the first one
     }
   }
 }, { deep: true, immediate: true });
+
+// Fetch linked form fields for nested tables
+async function fetchLinkedFormFieldsForNestedTable(formId: string, nestedColumn: any) {
+  if (!formId) return;
+  
+  try {
+    // Load saved forms to get the form configuration
+    await formStore.loadSavedForms();
+    
+    // Find the linked form in saved forms
+    const linkedForm = formStore.savedForms.find(form => form._id === formId);
+    
+    if (linkedForm && linkedForm.configuration) {
+      // Extract all data fields from the form configuration
+      const fields: any[] = [];
+      
+      // Navigate through the form structure: tabs -> sections -> rows -> columns -> fields
+      if (linkedForm.configuration.layout && linkedForm.configuration.layout.tabs) {
+        linkedForm.configuration.layout.tabs.forEach((tab: any) => {
+          if (tab.sections) {
+            tab.sections.forEach((section: any) => {
+              if (section.rows) {
+                section.rows.forEach((row: any) => {
+                  if (row.columns) {
+                    row.columns.forEach((column: any) => {
+                      if (column.fields) {
+                        column.fields.forEach((field: any) => {
+                          // Only include data fields (exclude layout/UI elements)
+                          if (field.type && 
+                              !['Tab Break', 'Section Break', 'Column Break', 'HTML', 'Divider'].includes(field.type)) {
+                            // Convert field format to match what TableControl expects
+                            const convertedField = {
+                              fieldname: field.name,
+                              label: field.label,
+                              fieldtype: field.type,
+                              reqd: field.required || false,
+                              description: field.helpText || field.placeholder || '',
+                              options: field.options || [],
+                              min: field.min,
+                              max: field.max,
+                              step: field.step,
+                              rows: field.rows || 3
+                            };
+                            fields.push(convertedField);
+                          }
+                        });
+                      }
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+      }
+      
+      // Store the linked form fields for this specific nested column
+      if (!nestedColumn.linkedFormFields) {
+        nestedColumn.linkedFormFields = [];
+      }
+      nestedColumn.linkedFormFields = fields;
+      
+      // Trigger reactive update for nested table displays
+      nestedTableFieldsUpdateTrigger.value++;
+      
+      /* eslint-disable no-console */
+      console.info(`TableControl: Successfully loaded ${fields.length} fields for nested table "${nestedColumn.label}" from linked form "${linkedForm.name}"`);
+      /* eslint-enable no-console */
+    }
+  } catch (error) {
+    /* eslint-disable no-console */
+    console.error('TableControl: Error fetching linked form fields for nested table:', error);
+    /* eslint-enable no-console */
+    if (nestedColumn.linkedFormFields) {
+      nestedColumn.linkedFormFields = [];
+    }
+  }
+}
 
 // Emit changes to both value and control configuration
 watch(tableData, (newData) => {
@@ -1217,6 +1316,31 @@ async function fetchLinkedFormFields(formId: string) {
   }
 }
 
+// Helper function to initialize nested table data for a row
+function initializeNestedTableDataForRow(rowData: Record<string, any>) {
+  // Get current table columns, including both configured and linked form fields
+  const currentColumns = tableColumns.value;
+  
+  currentColumns.forEach(column => {
+    if (column.type === 'table') {
+      if (!rowData[column.name] || !Array.isArray(rowData[column.name])) {
+        rowData[column.name] = [];
+      }
+    }
+  });
+  
+  // Also check for any table columns from df.tableColumns that might not be in computed tableColumns yet
+  if (props.df.tableColumns && props.df.tableColumns.length > 0) {
+    props.df.tableColumns.forEach((column: any) => {
+      if (column.type === 'table') {
+        if (!rowData[column.name] || !Array.isArray(rowData[column.name])) {
+          rowData[column.name] = [];
+        }
+      }
+    });
+  }
+}
+
 // Methods
 function addRow() {
   if (maxRows.value && tableData.value.length >= maxRows.value) {
@@ -1224,12 +1348,20 @@ function addRow() {
   }
   
   currentRowData.value = {};
+  
+  // Initialize nested table data for all table columns
+  initializeNestedTableDataForRow(currentRowData.value);
+  
   editingIndex.value = null;
   showModal.value = true;
 }
 
 function editRow(index: number) {
   currentRowData.value = { ...tableData.value[index] };
+  
+  // Initialize nested table data for all table columns
+  initializeNestedTableDataForRow(currentRowData.value);
+  
   editingIndex.value = index;
   showModal.value = true;
 }
@@ -1316,68 +1448,41 @@ function formatNestedCellValue(value: any, type: string): string {
 
 // Get nested table columns for display in the preview
 function getNestedTableColumnsForDisplay(column: any): any[] {
-  let columnsToUse: any[] = [];
+  // Access the trigger to make this function reactive to field loading
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _ = nestedTableFieldsUpdateTrigger.value;
   
-  // Debug logging for column detection
-  if (typeof window !== 'undefined') {
-    window.console?.log('getNestedTableColumnsForDisplay called with:', {
-      columnName: column.name,
-      columnType: column.type,
-      hasTableColumns: !!(column.tableColumns),
-      tableColumns: column.tableColumns,
-      hasLinkedFormId: !!(column.linkedFormId),
-      linkedFormId: column.linkedFormId,
-      linkedFormFieldsLength: linkedFormFields.value.length
-    });
-  }
+  let columnsToUse: any[] = [];
   
   // Priority 1: Use tableColumns from the column configuration
   if (column.tableColumns && column.tableColumns.length > 0) {
     columnsToUse = column.tableColumns;
-    if (typeof window !== 'undefined') {
-      window.console?.log('Using column.tableColumns for display:', columnsToUse);
-    }
   }
-  // Priority 2: Check if this column is from tableColumns and has nested configuration
+  // Priority 2: Use linkedFormFields if the column has fetched linked form fields
+  else if (column.linkedFormId && column.linkedFormFields && column.linkedFormFields.length > 0) {
+    columnsToUse = column.linkedFormFields;
+  }
+  // Priority 3: Check if this column is from tableColumns and has nested configuration
   else if (column.type === 'table') {
     const mainColumn = tableColumns.value.find(col => col.name === column.name) as any;
     if (mainColumn && mainColumn.tableColumns) {
       columnsToUse = mainColumn.tableColumns;
-      if (typeof window !== 'undefined') {
-        window.console?.log('Using mainColumn.tableColumns for display:', columnsToUse);
-      }
+    } else if (mainColumn && mainColumn.linkedFormFields && mainColumn.linkedFormFields.length > 0) {
+      columnsToUse = mainColumn.linkedFormFields;
     }
   }
-  // Priority 3: Check the original df.tableColumns for nested table configurations
+  // Priority 4: Check the original df.tableColumns for nested table configurations
   else if (props.df.tableColumns && props.df.tableColumns.length > 0) {
     const nestedTableColumn = props.df.tableColumns.find((col: any) => col.name === column.name && col.type === 'table');
     if (nestedTableColumn && (nestedTableColumn as any).tableColumns) {
       columnsToUse = (nestedTableColumn as any).tableColumns;
-      if (typeof window !== 'undefined') {
-        window.console?.log('Using df.tableColumns nested configuration for display:', columnsToUse);
-      }
+    } else if (nestedTableColumn && (nestedTableColumn as any).linkedFormFields) {
+      columnsToUse = (nestedTableColumn as any).linkedFormFields;
     }
   }
-  // Priority 4: Use linkedFormFields if the column has a linkedFormId
+  // Priority 5: Use linkedFormFields if the column has a linkedFormId (fallback to main table)
   else if (column.linkedFormId && linkedFormFields.value.length > 0) {
     columnsToUse = linkedFormFields.value;
-    if (typeof window !== 'undefined') {
-      window.console?.log('Using linkedFormFields for display:', columnsToUse);
-    }
-  }
-  // Priority 5: Try to match linkedFormId from main tableColumns configuration
-  else if (column.linkedFormId) {
-    // Check if any of the main table columns have this linkedFormId and get their linked form fields
-    const matchingMainColumn = tableColumns.value.find(col => 
-      (col as any).linkedFormId === column.linkedFormId
-    ) as any;
-    
-    if (matchingMainColumn && linkedFormFields.value.length > 0) {
-      columnsToUse = linkedFormFields.value;
-      if (typeof window !== 'undefined') {
-        window.console?.log('Using matched linkedFormFields for display:', columnsToUse);
-      }
-    }
   }
   
   // Configure nested table columns for display
@@ -1389,10 +1494,6 @@ function getNestedTableColumnsForDisplay(column: any): any[] {
       type: (col.type || col.fieldtype || 'text').toLowerCase()
     }));
     
-    if (typeof window !== 'undefined') {
-      window.console?.log('Configured nested table columns for display:', configuredColumns);
-    }
-    
     return configuredColumns;
   } else {
     // Fallback columns for display
@@ -1400,13 +1501,6 @@ function getNestedTableColumnsForDisplay(column: any): any[] {
       { id: 'name', name: 'name', label: 'Name', type: 'text' },
       { id: 'value', name: 'value', label: 'Value', type: 'text' }
     ];
-    
-    if (typeof window !== 'undefined') {
-      window.console?.log('Using fallback columns for display:', {
-        column: column,
-        fallbackColumns: fallbackColumns
-      });
-    }
     
     return fallbackColumns;
   }
@@ -1635,24 +1729,6 @@ function saveNestedTable() {
 }
 
 function closeNestedTableModal() {
-  showNestedTableModal.value = false;
-  currentNestedColumn.value = null;
-  nestedTableData.value = [];
-  nestedTableColumns.value = [];
-}
-
-// Add new row to nested table (opens form modal)
-function addNestedTableRow(column: any) {
-  if (typeof window !== 'undefined') {
-    window.console?.log('addNestedTableRow called with:', {
-      column,
-      columnName: column.name,
-      columnType: column.type,
-      currentRowData: currentRowData.value,
-      showNestedRowModal: showNestedRowModal.value
-    });
-  }
-  
   // Initialize nested table data if it doesn't exist
   if (!currentRowData.value[column.name]) {
     currentRowData.value[column.name] = [];
@@ -1662,15 +1738,13 @@ function addNestedTableRow(column: any) {
   currentNestedColumn.value = column;
   editingNestedRowIndex.value = null;
   
+  // If the column has a linkedFormId but no linkedFormFields, fetch them first
+  if (column.linkedFormId && (!column.linkedFormFields || column.linkedFormFields.length === 0)) {
+    await fetchLinkedFormFieldsForNestedTable(column.linkedFormId, column);
+  }
+  
   // Get the columns for the nested table
   getNestedTableColumns(column);
-  
-  if (typeof window !== 'undefined') {
-    window.console?.log('After getNestedTableColumns:', {
-      nestedTableColumns: nestedTableColumns.value,
-      nestedTableColumnsLength: nestedTableColumns.value.length
-    });
-  }
   
   // Initialize empty row data
   currentNestedRowData.value = {};
@@ -1695,26 +1769,19 @@ function addNestedTableRow(column: any) {
     }
   });
   
-  if (typeof window !== 'undefined') {
-    window.console?.log('Initialized nested row data:', {
-      currentNestedRowData: currentNestedRowData.value,
-      aboutToShowModal: true
-    });
-  }
-  
+  // Show the nested row modal
   showNestedRowModal.value = true;
-  
-  if (typeof window !== 'undefined') {
-    window.console?.log('Modal should now be visible:', {
-      showNestedRowModal: showNestedRowModal.value
-    });
-  }
 }
 
 // Edit existing row in nested table
-function editNestedTableRow(column: any, rowIndex: number) {
+async function editNestedTableRow(column: any, rowIndex: number) {
   currentNestedColumn.value = column;
   editingNestedRowIndex.value = rowIndex;
+  
+  // If the column has a linkedFormId but no linkedFormFields, fetch them first
+  if (column.linkedFormId && (!column.linkedFormFields || column.linkedFormFields.length === 0)) {
+    await fetchLinkedFormFieldsForNestedTable(column.linkedFormId, column);
+  }
   
   // Get the columns for the nested table
   getNestedTableColumns(column);
@@ -1781,66 +1848,40 @@ function closeNestedRowModal() {
 function getNestedTableColumns(column: any) {
   let columnsToUse: any[] = [];
   
-  // Debug logging to understand what we have
-  if (typeof window !== 'undefined') {
-    window.console?.log('getNestedTableColumns called with column:', {
-      column,
-      columnName: column.name,
-      columnType: column.type,
-      hasTableColumns: !!(column.tableColumns),
-      tableColumns: column.tableColumns,
-      hasLinkedFormId: !!(column.linkedFormId),
-      linkedFormId: column.linkedFormId,
-      currentTableColumns: tableColumns.value,
-      allTableColumnsDebug: tableColumns.value.map(col => ({
-        name: col.name,
-        type: col.type,
-        hasTableColumns: !!(col as any).tableColumns,
-        tableColumns: (col as any).tableColumns
-      }))
-    });
-  }
-  
   // Priority 1: Use tableColumns from the column configuration
   if (column.tableColumns && column.tableColumns.length > 0) {
     columnsToUse = column.tableColumns;
-    if (typeof window !== 'undefined') {
-      window.console?.log('Using column.tableColumns:', columnsToUse);
-    }
   }
-  // Priority 2: Check if this column is from tableColumns and has nested configuration
+  // Priority 2: Use linkedFormFields if the column has a linkedFormId and we've fetched the fields
+  else if (column.linkedFormId && column.linkedFormFields && column.linkedFormFields.length > 0) {
+    columnsToUse = column.linkedFormFields;
+  }
+  // Priority 3: Check if this column is from tableColumns and has nested configuration
   else if (column.type === 'table') {
     const mainColumn = tableColumns.value.find(col => col.name === column.name) as any;
     if (mainColumn && mainColumn.tableColumns) {
       columnsToUse = mainColumn.tableColumns;
-      if (typeof window !== 'undefined') {
-        window.console?.log('Using mainColumn.tableColumns:', columnsToUse);
-      }
     }
   }
-  // Priority 3: Check the original df.tableColumns for nested table configurations
+  // Priority 4: Check the original df.tableColumns for nested table configurations
   else if (props.df.tableColumns && props.df.tableColumns.length > 0) {
     const nestedTableColumn = props.df.tableColumns.find((col: any) => col.name === column.name && col.type === 'table');
     if (nestedTableColumn && (nestedTableColumn as any).tableColumns) {
       columnsToUse = (nestedTableColumn as any).tableColumns;
-      if (typeof window !== 'undefined') {
-        window.console?.log('Using df.tableColumns nested configuration:', columnsToUse);
-      }
     }
   }
-  // Priority 4: Use linkedFormFields if the column has a linkedFormId
+  // Priority 5: Use linkedFormFields if the column has a linkedFormId (fallback to main table linked fields)
   else if (column.linkedFormId && linkedFormFields.value.length > 0) {
     columnsToUse = linkedFormFields.value;
-    if (typeof window !== 'undefined') {
-      window.console?.log('Using linkedFormFields:', columnsToUse);
-    }
   }
-  // Priority 5: Try to fetch from a linked form if linkedFormId is specified
+  // Priority 6: Try to fetch from a linked form if linkedFormId is specified (trigger async fetch)
   else if (column.linkedFormId) {
-    // This should trigger form field loading if not already loaded
-    if (typeof window !== 'undefined') {
-      window.console?.log('Need to load fields for linkedFormId:', column.linkedFormId);
-    }
+    // Trigger async fetch and return early - the fetch will update the column.linkedFormFields
+    fetchLinkedFormFieldsForNestedTable(column.linkedFormId, column).then(() => {
+      // Re-run this function after fields are loaded
+      getNestedTableColumns(column);
+    });
+    return; // Early return to avoid setting fallback columns immediately
   }
   
   // Configure nested table columns
@@ -1902,6 +1943,15 @@ onMounted(async () => {
   // If we have a linkedFormId, fetch the linked form fields immediately
   if (props.df.linkedFormId) {
     await fetchLinkedFormFields(props.df.linkedFormId);
+  }
+  
+  // Also check for nested tables with linkedFormId and fetch their fields
+  if (props.df.tableColumns && props.df.tableColumns.length > 0) {
+    for (const column of props.df.tableColumns) {
+      if (column.type === 'table' && (column as any).linkedFormId) {
+        await fetchLinkedFormFieldsForNestedTable((column as any).linkedFormId, column as any);
+      }
+    }
   }
 });
 </script>
