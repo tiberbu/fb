@@ -333,7 +333,7 @@
           :key="`table-${control.id}-${control.tableColumns?.length || 0}-${control.linkedFormId || 'no-form'}`"
           :df="{
             fieldtype: 'Table',
-            label: control.label,
+            label: showLabel ? control.label : '',
             fieldname: control.name,
             reqd: control.required,
             placeholder: control.placeholder,
@@ -540,5 +540,14 @@ function getFieldStyles() {
 .form-control-preview:focus {
   box-shadow: none !important;
   outline: none !important;
+}
+
+/* Remove borders from table controls in preview mode */
+.form-control-preview .table-container {
+  border: none !important;
+}
+
+.form-control-preview .table-control {
+  border: none !important;
 }
 </style>
