@@ -26,6 +26,7 @@
         :model-value="null"
         :is-required="control.required"
         :is-read-only="true"
+        :show-label="false"
       />
     </div>
   </div>

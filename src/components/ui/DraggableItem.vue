@@ -11,7 +11,7 @@
         <span v-if="control.required" class="text-red-500">*</span>
       </div>
       <div class="field-actions">
-        <button 
+        <button
           class="text-gray-500 hover:text-gray-700 p-1 rounded"
           @click.stop="$emit('delete', control.id)"
         >
@@ -19,47 +19,51 @@
         </button>
       </div>
     </div>
-    
+
     <div class="field-preview">
       <FormControl
         :control="control"
         :model-value="null"
         :is-required="control.required"
         :is-read-only="true"
+        :is-preview="true"
+        :show-label="false"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Control } from '../../types';
-import FormControl from '../FormControl.vue';
+import { Control } from "../../types";
+import FormControl from "../FormControl.vue";
 
 const props = defineProps({
   control: {
     type: Object as () => Control,
-    required: true
+    required: true,
   },
   selected: {
     type: Boolean,
-    default: false
-  }
+    default: false,
+  },
 });
 
 // Get CSS classes for the field
 function getFieldClasses() {
-  const classes = ['field'];
-  
+  const classes = ["field"];
+
   // Add selected state
   if (props.selected) {
-    classes.push('selected');
+    classes.push("selected");
   }
-  
+
   // Add custom CSS classes if specified
   if (props.control.cssClasses) {
-    classes.push(...props.control.cssClasses.split(' ').filter(cls => cls.trim()));
+    classes.push(
+      ...props.control.cssClasses.split(" ").filter((cls) => cls.trim())
+    );
   }
-  
+
   return classes;
 }
 
@@ -67,27 +71,34 @@ function getFieldClasses() {
 function getFieldStyles() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const styles: any = {};
-  
+
   // Apply padding styles
   if (props.control.padding) {
-    if (props.control.padding.top) styles.paddingTop = props.control.padding.top;
-    if (props.control.padding.right) styles.paddingRight = props.control.padding.right;
-    if (props.control.padding.bottom) styles.paddingBottom = props.control.padding.bottom;
-    if (props.control.padding.left) styles.paddingLeft = props.control.padding.left;
+    if (props.control.padding.top)
+      styles.paddingTop = props.control.padding.top;
+    if (props.control.padding.right)
+      styles.paddingRight = props.control.padding.right;
+    if (props.control.padding.bottom)
+      styles.paddingBottom = props.control.padding.bottom;
+    if (props.control.padding.left)
+      styles.paddingLeft = props.control.padding.left;
   }
-  
+
   // Apply margin styles
   if (props.control.margin) {
     if (props.control.margin.top) styles.marginTop = props.control.margin.top;
-    if (props.control.margin.right) styles.marginRight = props.control.margin.right;
-    if (props.control.margin.bottom) styles.marginBottom = props.control.margin.bottom;
-    if (props.control.margin.left) styles.marginLeft = props.control.margin.left;
+    if (props.control.margin.right)
+      styles.marginRight = props.control.margin.right;
+    if (props.control.margin.bottom)
+      styles.marginBottom = props.control.margin.bottom;
+    if (props.control.margin.left)
+      styles.marginLeft = props.control.margin.left;
   }
-  
+
   return styles;
 }
 
-defineEmits(['edit', 'delete']);
+defineEmits(["edit", "delete"]);
 </script>
 
 <style>

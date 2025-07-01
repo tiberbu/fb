@@ -26,7 +26,7 @@ export function validateFormula(formula: string, availableFields: Control[]): st
     
     // Try to create a function from the formula to check syntax
     // We're not executing it here, just checking if it's valid JavaScript
-    new Function('field', 'sum', 'avg', 'min', 'max', 'if', 'return ' + formula);
+    new Function('field', 'sum', 'avg', 'min', 'max', 'count', 'len', 'upper', 'lower', 'round', 'cond', 'return ' + formula);
     
     return '';
   } catch (e) {
@@ -57,11 +57,15 @@ export function evaluateFormula(
     // Create helper functions to be used in formula
     const field = (name: string) => {
       const value = fieldValues[name];
+      // Handle undefined/null values
+      if (value === undefined || value === null) {
+        return formulaType === 'calculation' ? 0 : '';
+      }
       // Convert string numbers to actual numbers for calculations
-      if (formulaType === 'calculation' && typeof value === 'string' && !isNaN(Number(value))) {
+      if (formulaType === 'calculation' && typeof value === 'string' && !isNaN(Number(value)) && value.trim() !== '') {
         return Number(value);
       }
-      return value === undefined ? null : value;
+      return value;
     };
 
     const sum = (...args: any[]) => {
@@ -73,32 +77,59 @@ export function evaluateFormula(
 
     const avg = (...args: any[]) => {
       if (args.length === 0) return 0;
-      const validArgs = args.filter(val => !isNaN(Number(val)));
+      const validArgs = args.filter(val => !isNaN(Number(val)) && val !== null && val !== undefined && val !== '');
       if (validArgs.length === 0) return 0;
       return sum(...validArgs) / validArgs.length;
     };
 
     const min = (...args: any[]) => {
-      const validArgs = args.filter(val => !isNaN(Number(val)));
+      const validArgs = args.filter(val => !isNaN(Number(val)) && val !== null && val !== undefined && val !== '');
       if (validArgs.length === 0) return null;
       return Math.min(...validArgs.map(Number));
     };
 
     const max = (...args: any[]) => {
-      const validArgs = args.filter(val => !isNaN(Number(val)));
+      const validArgs = args.filter(val => !isNaN(Number(val)) && val !== null && val !== undefined && val !== '');
       if (validArgs.length === 0) return null;
       return Math.max(...validArgs.map(Number));
     };
 
+    // Add more helper functions
+    const count = (...args: any[]) => {
+      return args.filter(val => val !== null && val !== undefined && val !== '').length;
+    };
+
+    const len = (str: string) => {
+      return str ? str.toString().length : 0;
+    };
+
+    const upper = (str: string) => {
+      return str ? str.toString().toUpperCase() : '';
+    };
+
+    const lower = (str: string) => {
+      return str ? str.toString().toLowerCase() : '';
+    };
+
+    const round = (num: number, digits: number = 0) => {
+      const factor = Math.pow(10, digits);
+      return Math.round(Number(num) * factor) / factor;
+    };
+
+    // Conditional function (avoiding 'if' keyword which is reserved)
+    const cond = (condition: boolean, trueVal: any, falseVal: any) => {
+      return condition ? trueVal : falseVal;
+    };
+
     // This is a safe way to create a function from the formula
     const evaluator = new Function(
-      'field', 'sum', 'avg', 'min', 'max', 'if',
+      'field', 'sum', 'avg', 'min', 'max', 'count', 'len', 'upper', 'lower', 'round', 'cond',
       `"use strict"; return ${formula};`
     );
 
     // Execute the formula with our helper functions
-    const result = evaluator(field, sum, avg, min, max, (condition: boolean, trueVal: any, falseVal: any) => 
-      condition ? trueVal : falseVal
+    const result = evaluator(
+      field, sum, avg, min, max, count, len, upper, lower, round, cond
     );
 
     // For visibility formulas, ensure we return a boolean
@@ -108,7 +139,11 @@ export function evaluateFormula(
 
     return result;
   } catch (e) {
-    // console.error('Formula evaluation error:', e);
+    // Formula evaluation error - log in development
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.warn('Formula evaluation error:', e, 'Formula:', formula);
+    }
     return formulaType === 'calculation' ? null : true;
   }
 }

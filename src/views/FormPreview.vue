@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted, watch, nextTick } from 'vue';
 import { evaluateFormula } from '../utils/formula-evaluator';
 import type { Formula } from '../types';
 import FormPreviewSections from '../components/FormPreviewSections.vue';
@@ -262,13 +262,11 @@ function isFieldRequired(field: any): boolean {
 
 // Form value handling functions
 function updateFieldValue(field: any, value: any) {
-  const hasActiveCalculation = field.formulas && field.formulas.some((f: Formula) => 
-    f.type === 'calculation' && f.enabled
-  );
+  // Store the new value
+  formValues.value[field.name] = value;
   
-  if (!hasActiveCalculation) {
-    formValues.value[field.name] = value;
-  }
+  // Re-evaluate formulas immediately after value change
+  evaluateAllFormulas();
 }
 
 // Form submission
@@ -321,7 +319,7 @@ function getAllFormFields() {
   return allFields;
 }
 
-// Initialize form states
+//Initialize form states
 function initializeFormStates() {
   // Reset states
   formValues.value = {};
@@ -333,51 +331,264 @@ function initializeFormStates() {
   // Initialize field states
   const allFields = getAllFormFields();
   allFields.forEach(field => {
-    // Set default values
-    if (field.defaultValue !== undefined) {
+    // Set default values first - handle different field types appropriately
+    if (field.defaultValue !== undefined && field.defaultValue !== null && field.defaultValue !== '') {
       formValues.value[field.name] = field.defaultValue;
+    } else {
+      // Set appropriate empty values based on field type
+      switch (field.type) {
+        case 'number':
+        case 'range':
+          formValues.value[field.name] = 0;
+          break;
+        case 'checkbox':
+        case 'check':
+          formValues.value[field.name] = false;
+          break;
+        case 'table':
+          formValues.value[field.name] = [];
+          break;
+        case 'select':
+        case 'radio':
+          formValues.value[field.name] = '';
+          break;
+        default:
+          // For text, email, phone, url, date, datetime, time, textarea, etc.
+          formValues.value[field.name] = '';
+      }
     }
     
-    // Set initial states
+    // Check if field has calculation formula - if so, make it read-only
+    const hasCalculationFormula = field.formulas && field.formulas.some((f: Formula) => 
+      f.type === 'calculation' && f.enabled
+    );
+    
+    // Set initial states (will be overridden by formulas if applicable)
     fieldVisibility.value[field.id] = !field.hidden;
-    fieldReadOnly.value[field.id] = field.isReadonly || false;
+    fieldReadOnly.value[field.id] = hasCalculationFormula || field.isReadonly || false;
     fieldRequired.value[field.id] = field.required || false;
   });
 
-  // Initialize visibility based on formulas
-  evaluateAllFormulas();
+  // Initialize all sections as visible
+  formTabs.value.forEach((tab: any) => {
+    if (tab.sections) {
+      tab.sections.forEach((section: any) => {
+        sectionVisibility.value[section.id] = true;
+      });
+    }
+  });
+
+  // Evaluate formulas after setting initial values
+  // Use setTimeout to ensure all initial values are set before formula evaluation
+  setTimeout(() => {
+    evaluateAllFormulas();
+  }, 0);
 }
 
 // Evaluate all formulas
 function evaluateAllFormulas() {
-  const allFields = getAllFormFields();
+  // Prevent infinite loops
+  if (isEvaluatingFormulas) return;
   
-  allFields.forEach(field => {
-    if (field.formulas && field.formulas.length > 0) {
-      field.formulas.forEach((formula: Formula) => {
-        if (formula.enabled) {
-          try {
-            const result = evaluateFormula(formula.expression, formValues.value);
-            
-            switch (formula.type) {
-              case 'visibility':
-                fieldVisibility.value[field.id] = Boolean(result);
-                break;
-              case 'required':
-                fieldRequired.value[field.id] = Boolean(result);
-                break;
-              case 'readonly':
-                fieldReadOnly.value[field.id] = Boolean(result);
-                break;
-              case 'calculation':
-                if (!(field.name in formValues.value)) {
-                  formValues.value[field.name] = result;
-                }
-                break;
+  isEvaluatingFormulas = true;
+  
+  try {
+    const allFields = getAllFormFields();
+    
+    // First pass: Handle calculation formulas in dependency order
+    const calculationFields = allFields.filter(field => hasCalculationFormula(field));
+    const sortedCalculationFields = sortFieldsByDependencies(calculationFields, allFields);
+    
+    sortedCalculationFields.forEach(field => {
+      evaluateFieldFormulas(field, 'calculation');
+    });
+    
+    // Second pass: Handle all other formulas (visibility, required, readonly)
+    allFields.forEach(field => {
+      evaluateFieldFormulas(field, 'visibility');
+      evaluateFieldFormulas(field, 'required');
+      evaluateFieldFormulas(field, 'readonly');
+    });
+    
+    // Third pass: Handle section visibility
+    evaluateSectionFormulas();
+  } finally {
+    // Always reset the flag
+    isEvaluatingFormulas = false;
+  }
+}
+
+// Helper function to check if field has calculation formula
+function hasCalculationFormula(field: any): boolean {
+  if (field.formulas && field.formulas.length > 0) {
+    return field.formulas.some((f: Formula) => f.type === 'calculation' && f.enabled);
+  }
+  return false;
+}
+
+// Helper function to sort fields by dependencies for calculation formulas
+function sortFieldsByDependencies(fields: any[], allFields: any[]): any[] {
+  const fieldMap = new Map(allFields.map(f => [f.name, f]));
+  const visited = new Set<string>();
+  const visiting = new Set<string>();
+  const result: any[] = [];
+  
+  function visit(field: any) {
+    if (visiting.has(field.name)) {
+      // Circular dependency - skip to avoid infinite loop
+      return;
+    }
+    if (visited.has(field.name)) {
+      return;
+    }
+    
+    visiting.add(field.name);
+    
+    // Find dependencies in calculation formulas
+    const dependencies = getFieldDependencies(field);
+    for (const dep of dependencies) {
+      const depField = fieldMap.get(dep);
+      if (depField && hasCalculationFormula(depField)) {
+        visit(depField);
+      }
+    }
+    
+    visiting.delete(field.name);
+    visited.add(field.name);
+    result.push(field);
+  }
+  
+  fields.forEach(field => {
+    if (!visited.has(field.name)) {
+      visit(field);
+    }
+  });
+  
+  return result;
+}
+
+// Helper function to get field dependencies from formulas
+function getFieldDependencies(field: any): string[] {
+  const dependencies: string[] = [];
+  
+  if (field.formulas && field.formulas.length > 0) {
+    field.formulas.forEach((formula: Formula) => {
+      if (formula.enabled) {
+        const matches = formula.expression.match(/field\(['"]([^'"]+)['"]\)/g);
+        if (matches) {
+          matches.forEach(match => {
+            const fieldName = match.match(/field\(['"]([^'"]+)['"]\)/)?.[1];
+            if (fieldName && !dependencies.includes(fieldName)) {
+              dependencies.push(fieldName);
             }
-          } catch (error) {
-            // Error evaluating formula - handle silently in preview
-          }
+          });
+        }
+      }
+    });
+  }
+  
+  return dependencies;
+}
+
+// Evaluate formulas for a specific field and type
+function evaluateFieldFormulas(field: any, formulaType: 'calculation' | 'visibility' | 'required' | 'readonly') {
+  if (!field.formulas || field.formulas.length === 0) return;
+  
+  field.formulas.forEach((formula: Formula) => {
+    if (formula.enabled && formula.type === formulaType) {
+      try {
+        const result = evaluateFormula(formula.expression, formValues.value);
+        
+        switch (formula.type) {
+          case 'visibility':
+            fieldVisibility.value[field.id] = Boolean(result);
+            break;
+          case 'required':
+            fieldRequired.value[field.id] = Boolean(result);
+            break;
+          case 'readonly':
+            const readonlyResult = Boolean(result);
+            fieldReadOnly.value[field.id] = readonlyResult;
+            
+            // Debug logging in development
+            if (process.env.NODE_ENV === 'development') {
+              // eslint-disable-next-line no-console
+              console.log(`Readonly formula for field "${field.name}": ${result} -> ${readonlyResult}`);
+            }
+            break;
+          case 'calculation':
+            // Always update calculated value, even if the same
+            // This ensures the UI reflects the correct calculated value
+            const calculatedResult = result;
+            
+            // Format the result appropriately for the field type
+            let formattedResult = calculatedResult;
+            if (field.type === 'number' && typeof calculatedResult === 'number') {
+              // Round to reasonable decimal places for display
+              formattedResult = Math.round(calculatedResult * 100) / 100;
+            }
+            
+            formValues.value[field.name] = formattedResult;
+            
+            // Debug logging in development
+            if (process.env.NODE_ENV === 'development') {
+              // eslint-disable-next-line no-console
+              console.log(`Calculated field "${field.name}": ${calculatedResult} -> ${formattedResult}`);
+            }
+            break;
+        }
+      } catch (error) {
+        // Handle formula errors gracefully in preview mode
+        if (process.env.NODE_ENV === 'development') {
+          // eslint-disable-next-line no-console
+          console.warn(`Formula evaluation error for field ${field.name} (${formulaType}):`, error);
+        }
+        
+        // Set safe defaults on error
+        switch (formulaType) {
+          case 'visibility':
+            fieldVisibility.value[field.id] = true; // Show field on error
+            break;
+          case 'required':
+            fieldRequired.value[field.id] = field.required || false; // Use field's base requirement
+            break;
+          case 'readonly':
+            fieldReadOnly.value[field.id] = field.isReadonly || false; // Use field's base readonly state
+            break;
+          case 'calculation':
+            // Keep existing value on calculation error
+            break;
+        }
+      }
+    }
+  });
+}
+
+// Evaluate section visibility formulas
+function evaluateSectionFormulas() {
+  // Get all sections from all tabs
+  formTabs.value.forEach((tab: any) => {
+    if (tab.sections) {
+      tab.sections.forEach((section: any) => {
+        if (section.formulas && section.formulas.length > 0) {
+          section.formulas.forEach((formula: Formula) => {
+            if (formula.enabled && formula.type === 'visibility') {
+              try {
+                const result = evaluateFormula(formula.expression, formValues.value);
+                sectionVisibility.value[section.id] = Boolean(result);
+              } catch (error) {
+                // Show section on error
+                sectionVisibility.value[section.id] = true;
+                if (process.env.NODE_ENV === 'development') {
+                  // eslint-disable-next-line no-console
+                  console.warn(`Section visibility formula error for section ${section.id}:`, error);
+                }
+              }
+            }
+          });
+        } else {
+          // Ensure section is visible if no formulas
+          sectionVisibility.value[section.id] = true;
         }
       });
     }
@@ -392,9 +603,52 @@ watch(() => props.formData, (newData) => {
   }
 }, { immediate: true });
 
+// Debugging helper for development
+if (process.env.NODE_ENV === 'development') {
+  // @ts-ignore - Attach to window for debugging
+  window.formPreviewDebug = {
+    formValues,
+    fieldVisibility,
+    fieldReadOnly,
+    fieldRequired,
+    sectionVisibility,
+    evaluateAllFormulas,
+    getAllFormFields,
+    isEvaluatingFormulas: () => isEvaluatingFormulas,
+    // Helper to check specific field readonly state
+    checkFieldReadOnly: (fieldId: string) => {
+      return {
+        fromState: fieldReadOnly.value[fieldId],
+        allReadOnlyStates: fieldReadOnly.value
+      };
+    }
+  };
+}
+
 // Watch for form values changes to re-evaluate formulas
-watch(formValues, () => {
-  evaluateAllFormulas();
+// Note: We use a flag to prevent infinite loops from calculation formulas
+let isEvaluatingFormulas = false;
+
+watch(formValues, (newValues, oldValues) => {
+  // Prevent infinite loops during formula evaluation
+  if (isEvaluatingFormulas) return;
+  
+  // Only re-evaluate if we have fields with formulas and values actually changed
+  if (newValues && oldValues) {
+    const hasFormulasToEvaluate = getAllFormFields().some(field => 
+      field.formulas && field.formulas.length > 0 && 
+      field.formulas.some((f: Formula) => f.enabled)
+    );
+    
+    if (hasFormulasToEvaluate) {
+      // Check if any values actually changed (to avoid unnecessary evaluations)
+      const valuesChanged = Object.keys(newValues).some(key => newValues[key] !== oldValues[key]);
+      
+      if (valuesChanged) {
+        evaluateAllFormulas();
+      }
+    }
+  }
 }, { deep: true });
 
 onMounted(() => {
@@ -438,6 +692,8 @@ onMounted(() => {
   padding: 28px 40px 20px;
   border-bottom: 1px solid #e2e8f0;
   background: #fafbfc;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-title {
