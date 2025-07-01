@@ -367,8 +367,26 @@
       {{ control.helpText }}
     </div>
     
+    <!-- Save Field Button (only show in form builder mode, not preview) -->
+    <div 
+      v-if="!isPreview"
+      class="mt-2"
+    >
+      <button
+        class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition-colors"
+        title="Save this field configuration for reuse"
+        @click="saveFieldAsTemplate"
+      >
+        <i class="fas fa-save mr-1" />
+        Save Field
+      </button>
+    </div>
+    
     <!-- Validation error -->
-    <div v-if="error" class="text-xs text-red-500 mt-1">
+    <div 
+      v-if="error"
+      class="text-xs text-red-500 mt-1"
+    >
       {{ error }}
     </div>
   </div>
@@ -399,6 +417,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: any];
   'update:control': [control: Control]; // Add this to update the control configuration
+  'save-field': [control: Control]; // Add this to save field as template
 }>();
 
 // Computed property for input element classes
@@ -453,6 +472,11 @@ function handleSelectChange(event: Event) {
 function handleCheckboxChange(event: Event) {
   const target = event.target as HTMLInputElement;
   updateValue(target.checked);
+}
+
+// Save field as template
+function saveFieldAsTemplate() {
+  emit('save-field', props.control);
 }
 
 // Get CSS classes for the field

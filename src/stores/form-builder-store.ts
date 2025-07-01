@@ -6,7 +6,9 @@ import {
 } from '../utils/form-builder-utils';
 import { isLocalId } from '../utils/id-utils';
 import { toast } from '../composables/useToast';
+import { StoredFieldsAPI } from '../services/StoredFieldsAPI';
 import type { DocField, FormState, Tab, Field } from '../types/form-builder';
+import type { Control } from '../types';
 import FormBuilderAPI from '../services/FormBuilderAPI';
 
 export const useFormBuilderStore = defineStore('form-builder-store', () => {
@@ -258,6 +260,40 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
     dirty.value = false;
   }
 
+  // Save field configuration as template
+  async function saveFieldConfiguration(control: Control, options: {
+    name?: string;
+    description?: string;
+    tags?: string[];
+  } = {}) {
+    try {
+      await StoredFieldsAPI.saveFieldConfiguration(control, options);
+      toast.success('Field configuration saved successfully');
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error saving field configuration:', error);
+      toast.error('Failed to save field configuration');
+      throw error;
+    }
+  }
+
+  // Add field from stored configuration
+  function addField(control: Control) {
+    // This would add the field to the current form
+    // Implementation depends on your form structure
+    if (currentTab.value && currentTab.value.sections.length > 0) {
+      const firstSection = currentTab.value.sections[0];
+      if (firstSection.columns && firstSection.columns.length > 0) {
+        const firstColumn = firstSection.columns[0];
+        if (!firstColumn.fields) {
+          firstColumn.fields = [];
+        }
+        firstColumn.fields.push(control);
+        dirty.value = true;
+      }
+    }
+  }
+
   return { 
     doctype,
     form,
@@ -293,6 +329,8 @@ export const useFormBuilderStore = defineStore('form-builder-store', () => {
     updateFormConfiguration,
     loadFormConfiguration,
     loadSavedForms,
-    newForm
+    newForm,
+    saveFieldConfiguration,
+    addField
   };
 });

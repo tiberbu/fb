@@ -28,6 +28,7 @@
         :is-read-only="true"
         :is-preview="true"
         :show-label="false"
+        @save-field="$emit('save-field', $event)"
       />
     </div>
   </div>
@@ -98,7 +99,7 @@ function getFieldStyles() {
   return styles;
 }
 
-defineEmits(["edit", "delete"]);
+defineEmits(["edit", "delete", "save-field"]);
 </script>
 
 <style>

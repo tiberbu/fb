@@ -12,15 +12,37 @@
             Add Field
           </h2>
           <p class="text-sm text-gray-600 leading-relaxed">
-            Choose a field type to add to your form
+            Choose a field type or reuse a saved field
           </p>
         </div>
-        <button 
-          @click="$emit('close')"
+        <button
           class="flex-shrink-0 p-2 hover:bg-gray-100 rounded-lg transition-colors"
           aria-label="Close sidebar"
+          @click="$emit('close')"
         >
           <i class="fas fa-times text-gray-400 hover:text-gray-600" />
+        </button>
+      </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="flex-shrink-0 px-4 pt-4 border-b border-gray-100 bg-white">
+      <div class="tabs-nav flex bg-gray-100 rounded-lg p-1 mb-4">
+        <button
+          class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all"
+          :class="{ 'active bg-white text-blue-600 shadow-sm': activeTab === 'new', 'text-gray-600 hover:text-gray-900': activeTab !== 'new' }"
+          @click="activeTab = 'new'"
+        >
+          <i class="fas fa-plus mr-2" />
+          New Fields
+        </button>
+        <button
+          class="tab-button flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all"
+          :class="{ 'active bg-white text-blue-600 shadow-sm': activeTab === 'stored', 'text-gray-600 hover:text-gray-900': activeTab !== 'stored' }"
+          @click="activeTab = 'stored'"
+        >
+          <i class="fas fa-archive mr-2" />
+          Saved Fields
         </button>
       </div>
     </div>
@@ -30,92 +52,271 @@
       <div class="relative">
         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm" />
         <input
-          v-model="fieldSearchQuery"
+          v-model="searchQuery"
           type="text"
-          placeholder="Search field types..."
+          :placeholder="activeTab === 'new' ? 'Search field types...' : 'Search saved fields...'"
           class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
         >
       </div>
+      
+      <!-- Field type filter for stored fields -->
+      <div 
+        v-if="activeTab === 'stored'" 
+        class="mt-3"
+      >
+        <select
+          v-model="typeFilter"
+          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+        >
+          <option value="">
+            All Types
+          </option>
+          <option 
+            v-for="type in availableFieldTypes" 
+            :key="type"
+            :value="type"
+          >
+            {{ type.charAt(0).toUpperCase() + type.slice(1) }}
+          </option>
+        </select>
+      </div>
     </div>
 
-    <!-- Field Categories -->
+    <!-- Content Area -->
     <div class="flex-1 overflow-y-auto min-h-0">
-      <!-- Basic Fields -->
-      <div class="field-category">
-        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
-          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Basic Fields</h3>
+      <!-- New Fields Tab -->
+      <div v-if="activeTab === 'new'">
+        <!-- Basic Fields -->
+        <div class="field-category">
+          <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
+            <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Basic Fields
+            </h3>
+          </div>
+          <div class="field-list p-3 space-y-1">
+            <button
+              v-for="fieldType in filteredBasicFields"
+              :key="fieldType.type"
+              class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
+              @click="selectFieldType(fieldType.type as ControlType)"
+            >
+              <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
+                <i 
+                  class="fas"
+                  :class="getIconForFieldType(fieldType.type)"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-900 text-sm">
+                  {{ fieldType.label }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ getFieldTypeDescription(fieldType.type) }}
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
-        <div class="field-list p-3 space-y-1">
-          <button
-            v-for="fieldType in filteredBasicFields"
-            :key="fieldType.type"
-            class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
-            @click="selectFieldType(fieldType.type as ControlType)"
-          >
-            <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
-              <i class="fas" :class="getIconForFieldType(fieldType.type)" />
-            </div>
-            <div class="flex-1">
-              <div class="font-medium text-gray-900 text-sm">{{ fieldType.label }}</div>
-              <div class="text-xs text-gray-500 mt-0.5">{{ getFieldTypeDescription(fieldType.type) }}</div>
-            </div>
-          </button>
+
+        <!-- Advanced Fields -->
+        <div class="field-category">
+          <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
+            <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Advanced Fields
+            </h3>
+          </div>
+          <div class="field-list p-3 space-y-1">
+            <button
+              v-for="fieldType in filteredAdvancedFields"
+              :key="fieldType.type"
+              class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
+              @click="selectFieldType(fieldType.type as ControlType)"
+            >
+              <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
+                <i 
+                  class="fas"
+                  :class="getIconForFieldType(fieldType.type)"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-900 text-sm">
+                  {{ fieldType.label }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ getFieldTypeDescription(fieldType.type) }}
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Layout & Display -->
+        <div class="field-category">
+          <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
+            <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+              Layout & Display
+            </h3>
+          </div>
+          <div class="field-list p-3 space-y-1">
+            <button
+              v-for="fieldType in filteredLayoutFields"
+              :key="fieldType.type"
+              class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
+              @click="selectFieldType(fieldType.type as ControlType)"
+            >
+              <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
+                <i 
+                  class="fas"
+                  :class="getIconForFieldType(fieldType.type)"
+                />
+              </div>
+              <div class="flex-1">
+                <div class="font-medium text-gray-900 text-sm">
+                  {{ fieldType.label }}
+                </div>
+                <div class="text-xs text-gray-500 mt-0.5">
+                  {{ getFieldTypeDescription(fieldType.type) }}
+                </div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- No Results for New Fields -->
+        <div 
+          v-if="allFilteredFields.length === 0 && searchQuery"
+          class="flex items-center justify-center p-8"
+        >
+          <div class="text-center">
+            <i class="fas fa-search text-4xl text-gray-300 mb-4" />
+            <p class="text-gray-500 text-sm">
+              No field types found matching "{{ searchQuery }}"
+            </p>
+            <p class="text-gray-400 text-xs mt-2">
+              Try a different search term
+            </p>
+          </div>
         </div>
       </div>
 
-      <!-- Advanced Fields -->
-      <div class="field-category">
-        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
-          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Advanced Fields</h3>
+      <!-- Stored Fields Tab -->
+      <div v-else-if="activeTab === 'stored'">
+        <!-- Loading state -->
+        <div 
+          v-if="isLoadingStoredFields"
+          class="flex items-center justify-center p-8"
+        >
+          <div class="text-center">
+            <i class="fas fa-spinner fa-spin text-2xl text-blue-500 mb-3" />
+            <p class="text-gray-600 text-sm">
+              Loading saved fields...
+            </p>
+          </div>
         </div>
-        <div class="field-list p-3 space-y-1">
-          <button
-            v-for="fieldType in filteredAdvancedFields"
-            :key="fieldType.type"
-            class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
-            @click="selectFieldType(fieldType.type as ControlType)"
+
+        <!-- Stored fields list -->
+        <div 
+          v-else-if="storedFields.length > 0"
+          class="stored-fields-list p-3 space-y-2"
+        >
+          <div
+            v-for="field in storedFields"
+            :key="field._id"
+            class="stored-field-item p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 cursor-pointer transition-all group"
+            @click="selectStoredField(field)"
           >
-            <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
-              <i class="fas" :class="getIconForFieldType(fieldType.type)" />
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center mb-2">
+                  <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
+                    <i 
+                      class="fas"
+                      :class="getIconForFieldType(field.type)"
+                    />
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="font-medium text-gray-900 text-sm truncate">
+                      {{ field.label }}
+                    </h4>
+                    <div class="flex items-center mt-1">
+                      <span class="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded">
+                        {{ field.type }}
+                      </span>
+                      <span class="ml-2 text-xs text-gray-500">
+                        <i class="fas fa-chart-bar mr-1" />
+                        {{ field.usageCount }} uses
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <p 
+                  v-if="field.description"
+                  class="text-xs text-gray-600 mb-2 line-clamp-2"
+                >
+                  {{ field.description }}
+                </p>
+                <div 
+                  v-if="field.tags && field.tags.length > 0"
+                  class="flex flex-wrap gap-1"
+                >
+                  <span
+                    v-for="tag in field.tags.slice(0, 3)"
+                    :key="tag"
+                    class="inline-block px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded"
+                  >
+                    {{ tag }}
+                  </span>
+                  <span
+                    v-if="field.tags.length > 3"
+                    class="inline-block px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded"
+                  >
+                    +{{ field.tags.length - 3 }}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="flex-1">
-              <div class="font-medium text-gray-900 text-sm">{{ fieldType.label }}</div>
-              <div class="text-xs text-gray-500 mt-0.5">{{ getFieldTypeDescription(fieldType.type) }}</div>
-            </div>
+          </div>
+        </div>
+
+        <!-- Empty state for stored fields -->
+        <div 
+          v-else-if="!isLoadingStoredFields"
+          class="flex items-center justify-center p-8"
+        >
+          <div class="text-center">
+            <i class="fas fa-archive text-4xl text-gray-300 mb-4" />
+            <p class="text-gray-500 text-sm">
+              No saved fields found
+            </p>
+            <p class="text-gray-400 text-xs mt-2">
+              Save field configurations to reuse them later
+            </p>
+          </div>
+        </div>
+
+        <!-- Pagination for stored fields -->
+        <div 
+          v-if="storedFields.length > 0 && pagination.totalPages > 1"
+          class="flex items-center justify-center gap-3 p-4 border-t border-gray-100"
+        >
+          <button
+            class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="pagination.currentPage <= 1"
+            @click="changePage(pagination.currentPage - 1)"
+          >
+            <i class="fas fa-chevron-left" />
+          </button>
+          <span class="text-sm text-gray-600">
+            {{ pagination.currentPage }} / {{ pagination.totalPages }}
+          </span>
+          <button
+            class="px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="pagination.currentPage >= pagination.totalPages"
+            @click="changePage(pagination.currentPage + 1)"
+          >
+            <i class="fas fa-chevron-right" />
           </button>
         </div>
-      </div>
-
-      <!-- Layout & Display -->
-      <div class="field-category">
-        <div class="category-header sticky top-0 px-4 py-3 bg-gray-50 border-b border-gray-100 z-10">
-          <h3 class="text-xs font-semibold text-gray-700 uppercase tracking-wide">Layout & Display</h3>
-        </div>
-        <div class="field-list p-3 space-y-1">
-          <button
-            v-for="fieldType in filteredLayoutFields"
-            :key="fieldType.type"
-            class="field-type-item w-full flex items-center p-3 hover:bg-blue-50 hover:border-blue-200 border border-transparent rounded-lg text-left transition-all group"
-            @click="selectFieldType(fieldType.type as ControlType)"
-          >
-            <div class="field-icon mr-3 w-8 h-8 bg-gray-100 group-hover:bg-blue-100 rounded-lg flex items-center justify-center text-gray-600 group-hover:text-blue-600 text-sm">
-              <i class="fas" :class="getIconForFieldType(fieldType.type)" />
-            </div>
-            <div class="flex-1">
-              <div class="font-medium text-gray-900 text-sm">{{ fieldType.label }}</div>
-              <div class="text-xs text-gray-500 mt-0.5">{{ getFieldTypeDescription(fieldType.type) }}</div>
-            </div>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- No Results -->
-    <div v-if="allFilteredFields.length === 0 && fieldSearchQuery" class="flex-1 flex items-center justify-center p-8">
-      <div class="text-center">
-        <i class="fas fa-search text-4xl text-gray-300 mb-4" />
-        <p class="text-gray-500 text-sm">No field types found matching "{{ fieldSearchQuery }}"</p>
-        <p class="text-gray-400 text-xs mt-2">Try a different search term</p>
       </div>
     </div>
   </div>
@@ -130,202 +331,291 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { ControlType } from '../../types';
+import { computed, ref, watch, onMounted } from 'vue'
+import type { ControlType } from '@/types'
+import { StoredFieldsAPI } from '@/services/StoredFieldsAPI'
+import { useFormBuilderStore } from '@/stores/form-builder-store'
+import { useToast } from '@/composables/useToast'
 
-interface Props {
-  isOpen: boolean;
+interface FieldType {
+  type: string
+  label: string
 }
 
-defineProps<Props>();
+interface StoredField {
+  _id: string
+  name: string
+  label: string
+  type: string
+  description?: string
+  tags?: string[]
+  usageCount: number
+  configuration: any
+}
 
-const emit = defineEmits(['select-field-type', 'close']);
+interface Props {
+  isOpen: boolean
+}
 
-// Field search functionality
-const fieldSearchQuery = ref("");
+interface Emits {
+  (e: 'select-field-type', fieldType: ControlType): void
+  (e: 'close'): void
+}
 
-// Field categories
-const basicFields = [
-  { type: "text", label: "Text" },
-  { type: "textarea", label: "Text Area" },
-  { type: "number", label: "Number" },
-  { type: "email", label: "Email" },
-  { type: "phone", label: "Phone" },
-  { type: "url", label: "URL" },
-  { type: "password", label: "Password" },
-];
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
 
-const advancedFields = [
-  { type: "select", label: "Select" },
-  { type: "radio", label: "Radio" },
-  { type: "checkbox", label: "Checkbox" },
-  { type: "date", label: "Date" },
-  { type: "datetime", label: "Date Time" },
-  { type: "time", label: "Time" },
-  { type: "file", label: "File Upload" },
-  { type: "image", label: "Image Upload" },
-  { type: "table", label: "Table" },
-  { type: "range", label: "Range/Slider" },
-  { type: "color", label: "Color Picker" },
-];
+// Composables
+const formBuilderStore = useFormBuilderStore()
+const { success: showToast } = useToast()
 
-const layoutFields = [
-  { type: "link", label: "Link" },
-  { type: "hidden", label: "Hidden Field" },
-  { type: "readonly", label: "Read Only" },
-  { type: "divider", label: "Divider" },
-  { type: "html", label: "HTML Content" },
-];
+// Keep reference to props for potential future use
+const isOpen = computed(() => props.isOpen)
 
-// Filtered field categories based on search
-const filteredBasicFields = computed(() => {
-  if (!fieldSearchQuery.value) return basicFields;
-  const query = fieldSearchQuery.value.toLowerCase();
-  return basicFields.filter(field => 
-    field.label.toLowerCase().includes(query) || 
-    field.type.toLowerCase().includes(query) ||
-    getFieldTypeDescription(field.type).toLowerCase().includes(query)
-  );
-});
+// Reactive state
+const activeTab = ref<'new' | 'stored'>('new')
+const searchQuery = ref('')
+const storedFieldSearchQuery = ref('')
+const isLoadingStoredFields = ref(false)
+const storedFields = ref<StoredField[]>([])
+const typeFilter = ref('')
+const sortBy = ref<'name' | 'usageCount' | 'createdAt'>('name')
 
-const filteredAdvancedFields = computed(() => {
-  if (!fieldSearchQuery.value) return advancedFields;
-  const query = fieldSearchQuery.value.toLowerCase();
-  return advancedFields.filter(field => 
-    field.label.toLowerCase().includes(query) || 
-    field.type.toLowerCase().includes(query) ||
-    getFieldTypeDescription(field.type).toLowerCase().includes(query)
-  );
-});
+// Pagination state
+const pagination = ref({
+  currentPage: 1,
+  totalPages: 1,
+  totalItems: 0,
+  pageSize: 20
+})
 
-const filteredLayoutFields = computed(() => {
-  if (!fieldSearchQuery.value) return layoutFields;
-  const query = fieldSearchQuery.value.toLowerCase();
-  return layoutFields.filter(field => 
-    field.label.toLowerCase().includes(query) || 
-    field.type.toLowerCase().includes(query) ||
-    getFieldTypeDescription(field.type).toLowerCase().includes(query)
-  );
-});
+// Field type definitions
+const FIELD_TYPES: FieldType[] = [
+  // Basic Fields
+  { type: 'text', label: 'Text Input' },
+  { type: 'textarea', label: 'Text Area' },
+  { type: 'email', label: 'Email' },
+  { type: 'phone', label: 'Phone' },
+  { type: 'number', label: 'Number' },
+  { type: 'currency', label: 'Currency' },
+  { type: 'date', label: 'Date' },
+  { type: 'time', label: 'Time' },
+  { type: 'datetime', label: 'Date & Time' },
+  { type: 'select', label: 'Select' },
+  { type: 'checkbox', label: 'Checkbox' },
+  { type: 'radio', label: 'Radio' },
+  { type: 'file', label: 'File Upload' },
+  
+  // Advanced Fields
+  { type: 'multiselect', label: 'Multi-Select' },
+  { type: 'rating', label: 'Rating' },
+  { type: 'slider', label: 'Slider' },
+  { type: 'password', label: 'Password' },
+  { type: 'url', label: 'URL' },
+  { type: 'color', label: 'Color Picker' },
+  { type: 'image', label: 'Image Upload' },
+  { type: 'signature', label: 'Signature' },
+  { type: 'geolocation', label: 'Geolocation' },
+  { type: 'table', label: 'Table' },
+  
+  // Layout & Display
+  { type: 'html', label: 'HTML' },
+  { type: 'heading', label: 'Heading' },
+  { type: 'break', label: 'Line Break' },
+  { type: 'divider', label: 'Divider' }
+]
+
+const BASIC_FIELD_TYPES = ['text', 'textarea', 'email', 'phone', 'number', 'currency', 'date', 'time', 'datetime', 'select', 'checkbox', 'radio', 'file']
+const ADVANCED_FIELD_TYPES = ['multiselect', 'rating', 'slider', 'password', 'url', 'color', 'image', 'signature', 'geolocation', 'table']
+const LAYOUT_FIELD_TYPES = ['html', 'heading', 'break', 'divider']
+
+// Computed properties
+const filteredFields = computed(() => {
+  if (!searchQuery.value) return FIELD_TYPES
+  return FIELD_TYPES.filter(field => 
+    field.label.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+    field.type.toLowerCase().includes(searchQuery.value.toLowerCase())
+  )
+})
+
+const filteredBasicFields = computed(() => 
+  filteredFields.value.filter(field => BASIC_FIELD_TYPES.includes(field.type))
+)
+
+const filteredAdvancedFields = computed(() => 
+  filteredFields.value.filter(field => ADVANCED_FIELD_TYPES.includes(field.type))
+)
+
+const filteredLayoutFields = computed(() => 
+  filteredFields.value.filter(field => LAYOUT_FIELD_TYPES.includes(field.type))
+)
 
 const allFilteredFields = computed(() => [
   ...filteredBasicFields.value,
   ...filteredAdvancedFields.value,
   ...filteredLayoutFields.value
-]);
+])
 
-function selectFieldType(type: ControlType) {
-  console.log(`FieldSelectorSidebar: Field type ${type} clicked`);
-  emit('select-field-type', type);
+const availableFieldTypes = computed(() => {
+  return Array.from(new Set(FIELD_TYPES.map(f => f.type))).sort()
+})
+
+// Methods
+const selectFieldType = (fieldType: ControlType) => {
+  emit('select-field-type', fieldType)
 }
 
-// Helper function to get icon for field type
-function getIconForFieldType(type: string) {
-  switch (type) {
-    case 'text':
-      return 'fa-font';
-    case 'textarea':
-      return 'fa-align-left';
-    case 'number':
-      return 'fa-hashtag';
-    case 'email':
-      return 'fa-envelope';
-    case 'phone':
-      return 'fa-phone';
-    case 'url':
-      return 'fa-link';
-    case 'password':
-      return 'fa-lock';
-    case 'select':
-      return 'fa-chevron-down';
-    case 'radio':
-      return 'fa-dot-circle';
-    case 'checkbox':
-      return 'fa-check-square';
-    case 'date':
-      return 'fa-calendar';
-    case 'datetime':
-      return 'fa-calendar-alt';
-    case 'time':
-      return 'fa-clock';
-    case 'file':
-      return 'fa-file-upload';
-    case 'image':
-      return 'fa-image';
-    case 'table':
-      return 'fa-table';
-    case 'range':
-      return 'fa-sliders-h';
-    case 'color':
-      return 'fa-palette';
-    case 'link':
-      return 'fa-external-link-alt';
-    case 'hidden':
-      return 'fa-eye-slash';
-    case 'readonly':
-      return 'fa-eye';
-    case 'divider':
-      return 'fa-minus';
-    case 'html':
-      return 'fa-code';
-    default:
-      return 'fa-question';
+const selectStoredField = async (field: StoredField) => {
+  try {
+    // Add the stored field to the form with its full configuration
+    formBuilderStore.addField({
+      id: `field_${Date.now()}`,
+      type: field.type as ControlType,
+      label: field.label,
+      ...field.configuration
+    })
+
+    // Track usage
+    await StoredFieldsAPI.markFieldAsUsed(field._id)
+    
+    // Update local usage count
+    const fieldIndex = storedFields.value.findIndex(f => f._id === field._id)
+    if (fieldIndex !== -1) {
+      storedFields.value[fieldIndex].usageCount++
+    }
+
+    showToast('Field added to form successfully')
+    emit('close')
+  } catch (error) {
+    showToast('Failed to add field to form')
   }
 }
 
-// Helper function to get field type description
-function getFieldTypeDescription(type: string) {
-  switch (type) {
-    case 'text':
-      return 'Single line text input';
-    case 'textarea':
-      return 'Multi-line text input';
-    case 'number':
-      return 'Numeric input with validation';
-    case 'email':
-      return 'Email address with validation';
-    case 'phone':
-      return 'Phone number input';
-    case 'url':
-      return 'Website URL input';
-    case 'password':
-      return 'Password input (hidden text)';
-    case 'select':
-      return 'Dropdown selection';
-    case 'radio':
-      return 'Single choice from options';
-    case 'checkbox':
-      return 'Multiple choice selection';
-    case 'date':
-      return 'Date picker';
-    case 'datetime':
-      return 'Date and time picker';
-    case 'time':
-      return 'Time picker';
-    case 'file':
-      return 'File upload control';
-    case 'image':
-      return 'Image upload control';
-    case 'table':
-      return 'Table with columns from another form';
-    case 'range':
-      return 'Slider for numeric ranges';
-    case 'color':
-      return 'Color picker control';
-    case 'link':
-      return 'Clickable link element';
-    case 'hidden':
-      return 'Hidden field for data storage';
-    case 'readonly':
-      return 'Display-only field';
-    case 'divider':
-      return 'Visual separator line';
-    case 'html':
-      return 'Custom HTML content';
-    default:
-      return 'Form field';
+const loadStoredFields = async () => {
+  if (isLoadingStoredFields.value) return
+
+  try {
+    isLoadingStoredFields.value = true
+    
+    const response = await StoredFieldsAPI.getStoredFields({
+      search: storedFieldSearchQuery.value,
+      type: typeFilter.value || undefined,
+      page: pagination.value.currentPage,
+      limit: pagination.value.pageSize,
+      sortBy: sortBy.value
+    })
+
+    storedFields.value = response.data
+    pagination.value = {
+      currentPage: response.pagination.currentPage,
+      totalPages: response.pagination.totalPages,
+      totalItems: response.pagination.totalItems,
+      pageSize: pagination.value.pageSize
+    }
+  } catch (error) {
+    showToast('Failed to load saved fields')
+  } finally {
+    isLoadingStoredFields.value = false
   }
 }
+
+const changePage = async (page: number) => {
+  if (page < 1 || page > pagination.value.totalPages) return
+  pagination.value.currentPage = page
+  await loadStoredFields()
+}
+
+const getIconForFieldType = (type: string): string => {
+  const iconMap: Record<string, string> = {
+    text: 'fa-font',
+    textarea: 'fa-align-left',
+    email: 'fa-envelope',
+    phone: 'fa-phone',
+    number: 'fa-hashtag',
+    currency: 'fa-dollar-sign',
+    date: 'fa-calendar',
+    time: 'fa-clock',
+    datetime: 'fa-calendar-alt',
+    select: 'fa-list',
+    multiselect: 'fa-list-check',
+    checkbox: 'fa-check-square',
+    radio: 'fa-dot-circle',
+    file: 'fa-file',
+    image: 'fa-image',
+    rating: 'fa-star',
+    slider: 'fa-sliders-h',
+    password: 'fa-lock',
+    url: 'fa-link',
+    color: 'fa-palette',
+    signature: 'fa-signature',
+    geolocation: 'fa-map-marker-alt',
+    table: 'fa-table',
+    html: 'fa-code',
+    heading: 'fa-heading',
+    break: 'fa-minus',
+    divider: 'fa-grip-lines'
+  }
+  return iconMap[type] || 'fa-question'
+}
+
+const getFieldTypeDescription = (type: string): string => {
+  const descriptionMap: Record<string, string> = {
+    text: 'Single line text input',
+    textarea: 'Multi-line text input',
+    email: 'Email address input',
+    phone: 'Phone number input',
+    number: 'Numeric input',
+    currency: 'Currency amount input',
+    date: 'Date picker',
+    time: 'Time picker',
+    datetime: 'Date and time picker',
+    select: 'Single choice dropdown',
+    multiselect: 'Multiple choice dropdown',
+    checkbox: 'Single checkbox',
+    radio: 'Radio button group',
+    file: 'File upload',
+    image: 'Image upload',
+    rating: 'Star rating input',
+    slider: 'Range slider',
+    password: 'Password input',
+    url: 'URL input',
+    color: 'Color picker',
+    signature: 'Digital signature',
+    geolocation: 'Location coordinates',
+    table: 'Data table',
+    html: 'Custom HTML content',
+    heading: 'Section heading',
+    break: 'Line break',
+    divider: 'Visual divider'
+  }
+  return descriptionMap[type] || 'Unknown field type'
+}
+
+// Watchers
+watch(activeTab, (newTab) => {
+  if (newTab === 'stored') {
+    loadStoredFields()
+  }
+})
+
+// Debounced watch for search and filters
+let searchTimeout: ReturnType<typeof setTimeout> | null = null
+watch([storedFieldSearchQuery, typeFilter, sortBy], () => {
+  if (searchTimeout) {
+    clearTimeout(searchTimeout)
+  }
+  searchTimeout = setTimeout(() => {
+    pagination.value.currentPage = 1
+    loadStoredFields()
+  }, 300)
+})
+
+// Lifecycle
+onMounted(() => {
+  if (activeTab.value === 'stored') {
+    loadStoredFields()
+  }
+})
 </script>
 
 <style scoped>

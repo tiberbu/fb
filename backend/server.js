@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/database.js';
 import formConfigurationRoutes from './routes/formConfigurations.js';
 import formSubmissionRoutes from './routes/formSubmissions.js';
+import storedFieldRoutes from './routes/storedFields.js';
 
 // Load environment variables
 dotenv.config();
@@ -18,7 +19,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173'], // Support multiple ports
+  origin: '*', // Support multiple ports
   credentials: true
 }));
 
@@ -41,6 +42,7 @@ app.get('/health', (req, res) => {
 // API Routes
 app.use('/api/form-configurations', formConfigurationRoutes);
 app.use('/api/form-submissions', formSubmissionRoutes);
+app.use('/api/stored-fields', storedFieldRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

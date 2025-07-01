@@ -340,13 +340,23 @@
       
       <!-- Action Buttons -->
       <div class="flex justify-between mt-6">
-        <button 
-          class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
-          style="color: white !important;"
-          @click="deleteField"
-        >
-          Delete Field
-        </button>
+        <div class="flex gap-2">
+          <button 
+            class="bg-red-600 text-white px-4 py-2 rounded text-sm hover:bg-red-700"
+            style="color: white !important;"
+            @click="deleteField"
+          >
+            Delete Field
+          </button>
+          <button 
+            class="bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
+            style="color: white !important;"
+            @click="saveFieldConfiguration"
+          >
+            <i class="fas fa-save mr-1" />
+            Save Field
+          </button>
+        </div>
         <button 
           class="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
           style="color: white !important;"
@@ -360,6 +370,14 @@
     <div v-else class="text-center py-6 text-gray-500">
       Select a field to edit its properties
     </div>
+    
+    <!-- Save Field Modal -->
+    <SaveFieldModal
+      v-if="showSaveFieldModal && controlCopy"
+      :field="controlCopy"
+      @save="handleSaveField"
+      @cancel="showSaveFieldModal = false"
+    />
   </div>
 </template>
 
@@ -368,10 +386,13 @@ import { Control, Formula } from '../../types';
 import { computed, ref, watch } from 'vue';
 import { useFormBuilderStore } from '../../stores/form-builder-store';
 import { confirmDialog } from '../../utils/form-builder-utils';
+import { StoredFieldsAPI } from '../../services/StoredFieldsAPI';
+import { useToast } from '../../composables/useToast';
 import FormulaEditor from './FormulaEditor.vue';
 import FormulaManager from './FormulaManager.vue';
 import AccordionSection from './AccordionSection.vue';
 import TableControlProperties from './TableControlProperties.vue';
+import SaveFieldModal from './SaveFieldModal.vue';
 
 const props = defineProps({
   control: {
@@ -382,6 +403,7 @@ const props = defineProps({
 
 const emit = defineEmits(['update', 'delete', 'close-panel']);
 const store = useFormBuilderStore();
+const toast = useToast();
 
 // Auto-save functionality
 const autoSaveTimeout = ref<number | null>(null);
@@ -450,6 +472,9 @@ const showSectionFormulaEditor = ref(false);
 // Formula state
 const formula = ref('');
 const formulaType = ref<'calculation' | 'visibility'>('calculation');
+
+// Save field modal state
+const showSaveFieldModal = ref(false);
 
 // Initialize controlCopy from props
 watch(() => props.control, (newControl) => {
@@ -719,6 +744,29 @@ const hasRequiredFormula = computed(() => {
   if (!controlCopy.value?.formulas) return false;
   return controlCopy.value.formulas.some(f => f.type === 'required' && f.enabled);
 });
+
+// Save field configuration as template
+function saveFieldConfiguration() {
+  if (controlCopy.value) {
+    showSaveFieldModal.value = true;
+  }
+}
+
+// Handle save field modal
+async function handleSaveField(fieldData: { name: string; description: string; tags: string[] }) {
+  if (!controlCopy.value) return;
+  
+  try {
+    await StoredFieldsAPI.saveFieldConfiguration(controlCopy.value, fieldData);
+    toast.success('Field configuration saved successfully');
+    showSaveFieldModal.value = false;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.log('Error saving field configuration:', error);
+    console.error('Error saving field configuration:', error);
+    toast.error('Failed to save field configuration');
+  }
+}
 </script>
 
 <style>

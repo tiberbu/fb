@@ -1348,184 +1348,184 @@
         </div>
       </div>
     </div>
+  </div>
+</template>
 
-    <!-- Popover Sidebar Overlay -->
-    <div
-      v-if="showSidebar"
-      class="sidebar-overlay"
-      @click="closeSidebar"
-    />
+<script setup lang="ts">
+import { ref, computed, defineEmits, watch, onMounted, onUnmounted } from "vue";
+import { v4 as uuidv4 } from "uuid";
+import draggable from "vuedraggable";
+import PropertiesPanel from "../components/ui/PropertiesPanel.vue";
+import DraggableItem from "../components/ui/DraggableItem.vue";
+import FieldTypeSelector from "../components/ui/FieldTypeSelector.vue";
+import FormulaManager from "../components/ui/FormulaManager.vue";
+import AccordionSection from "../components/ui/AccordionSection.vue";
+import TabSections from "../components/TabSections.vue";
+import { Control, ControlType } from "../types";
 
-    <!-- Popover Sidebar -->
-    <div
-      class="popover-sidebar"
-      :class="{ 'open': showSidebar }"
-      @click.stop
-    >
-      <div class="sidebar-header">
-        <h3 class="sidebar-title">Properties</h3>
-        <button
-          class="sidebar-close-button"
-          @click="closeSidebar"
-        >
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      <div class="sidebar-content">
-        <div
-          v-if="selectedControl"
-          class="control-properties"
-        >
-          <PropertiesPanel
-            :control="selectedControl"
-            @update="updateControl"
-            @delete="deleteControl"
-          />
-        </div>
-        <div
-          v-else-if="selectedSection"
-          class="section-properties"
-        >
-          <h3 class="font-medium text-gray-700 mb-3">
-            Section Properties
-          </h3>
-          <div class="mb-4">
-            <p class="text-sm text-gray-600">
-              Section: "{{ getSectionById(selectedSection).title || 'Untitled Section' }}"
-            </p>
-          </div>
-          <div class="mb-4">
-            <button
-              class="delete-section-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-              @click="deleteSection(selectedSection)"
-            >
-              <i class="fas fa-trash-alt mr-2" />Delete Section
-            </button>
-          </div>
-        </div>
-        <div
-          v-else-if="selectedColumn"
-          class="column-properties"
-        >
-          <h3 class="font-medium text-gray-700 mb-3">
-            Column Properties
-          </h3>
-          <div class="mb-4">
-            <p class="text-sm text-gray-600">
-              Column {{ selectedColumn.columnIndex + 1 }} in section "{{ getSectionById(selectedColumn.sectionId).title || 'Untitled Section' }}"
-            </p>
-          </div>
-          <div class="mb-4">
-            <button
-              class="delete-column-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-              @click="deleteColumn(selectedColumn.sectionId, selectedColumn.columnIndex)"
-            >
-              <i class="fas fa-trash-alt mr-2" />Delete Column
-            </button>
-          </div>
-        </div>
-        <div
-          v-else-if="selectedRow"
-          class="row-properties"
-        >
-          <h3 class="font-medium text-gray-700 mb-3">
-            Row Properties
-          </h3>
-          <div class="mb-4">
-            <p class="text-sm text-gray-600">
-              Row {{ selectedRow.rowIndex + 1 }} in section "{{ getSectionById(selectedRow.sectionId).title || 'Untitled Section' }}"
-            </p>
-          </div>
-          <div class="mb-4">
-            <button
-              class="delete-row-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm"
-              @click="deleteRow(selectedRow.sectionId, selectedRow.rowIndex)"
-            >
-              <i class="fas fa-trash-alt mr-2" />Delete Row
-            </button>
-          </div>
-        </div>
-        <div
-          v-else
-          class="form-configuration"
-        >
-          <h3 class="font-medium text-gray-700 mb-3">
-            Form Configuration
-          </h3>
-          
-          <!-- General Settings Accordion -->
-          <AccordionSection title="General Settings">
-            <div class="mb-4">
-              <label class="block text-sm text-gray-600 mb-1">Form Name</label>
-              <input
-                v-model="formName"
-                type="text"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                placeholder="Enter form name"
-              >
-            </div>
+const emit = defineEmits(['form-data-change']);
 
-            <div class="mb-4">
-              <label class="block text-sm text-gray-600 mb-1">Form Description</label>
-              <textarea
-                v-model="formDescription"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                rows="3"
-                placeholder="Describe the purpose of this form"
-              />
-            </div>
+// Form configuration
+const formName = ref("New Form");
+const formDescription = ref("");
+const formId = ref(`form-${Date.now()}`);
+const isPublished = ref(false);
+const formLayout = ref("tabs"); // tabs, accordion, sidebar
 
-            <div class="mb-4">
-              <label class="block text-sm text-gray-600 mb-1">Form ID</label>
-              <input
-                v-model="formId"
-                type="text"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                placeholder="unique-form-id"
-              >
-            </div>
-            
-            <div class="mb-4">
-              <div class="flex items-center">
-                <input
-                  id="isPublished"
-                  v-model="isPublished"
-                  type="checkbox"
-                  class="mr-2"
-                >
-                <label
-                  for="isPublished"
-                  class="text-sm text-gray-600"
-                >Form is published</label>
-              </div>
-            </div>
+// Form state
+const tabs = ref<Array<{ label: string; sections: any[]; formulas?: any[] }>>([
+  {
+    label: "Tab 1",
+    sections: [],
+  },
+]);
 
-            <div class="mb-4">
-              <label class="block text-sm text-gray-600 mb-1">Layout Type</label>
-              <select
-                v-model="formLayout"
-                class="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-              >
-                <option value="tabs">Tabs (Default)</option>
-                <option value="accordion">Accordion</option>
-                <option value="sidebar">Sidebar Navigation</option>
-              </select>
-              <p class="text-xs text-gray-500 mt-1">
-                Choose how sections are displayed in the form
-              </p>
-            </div>
-          </AccordionSection>
-          
-          <!-- Export & Import Accordion -->
-          <AccordionSection title="Export & Import">
-            <div class="mb-4">
-              <button
-                class="w-full bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm flex items-center justify-center"
-                @click="exportForm"
-              >
-                <i class="fas fa-file-export mr-2" />
-                Export Form
-              </button>
+const activeTab = ref(0);
+const selectedTab = ref<number | null>(null);
+const selectedControl = ref<Control | null>(null);
+const selectedSection = ref<string | null>(null);
+const selectedColumn = ref<{sectionId: string; columnIndex: number} | null>(null);
+const selectedRow = ref<{sectionId: string; rowIndex: number} | null>(null);
+
+// Tab editing state
+const editingTabIndex = ref<number | null>(null);
+
+// Field selector state
+const showFieldSelector = ref(false);
+const activeSection = ref<string | null>(null);
+const activeRowIndex = ref<number | null>(null);
+const activeColumn = ref<number | null>(null);
+
+// File input reference
+const fileInput = ref<HTMLInputElement | null>(null);
+
+// Sidebar state
+const showSidebar = ref(false);
+
+// Field search functionality
+const fieldSearchQuery = ref("");
+
+// Emit form data changes whenever relevant data changes
+watch([formName, formDescription, formId, isPublished, formLayout, tabs], () => {
+  emitFormDataChange();
+}, { deep: true });
+
+// Function to emit the current form structure to parent component
+function emitFormDataChange() {
+  const formStructure = {
+    metadata: {
+      formName: formName.value,
+      formDescription: formDescription.value,
+      formId: formId.value,
+      isPublished: isPublished.value,
+      formLayout: formLayout.value,
+      dateCreated: new Date().toISOString(),
+      lastUpdated: new Date().toISOString()
+    },
+    tabs: tabs.value
+  };
+  
+  // Save to localStorage for compatibility
+  localStorage.setItem('savedFormStructure', JSON.stringify(formStructure));
+  
+  // Emit to parent
+  emit('form-data-change', formStructure);
+}
+
+function openTabProperties(index: number) {
+  // Select the tab for editing in the sidebar
+  selectedTab.value = index;
+  // Clear other selections
+  selectedControl.value = null;
+  selectedSection.value = null;
+  // Show sidebar when something is selected
+  showSidebar.value = true;
+}
+
+// Sidebar toggle functions
+function toggleSidebar() {
+  showSidebar.value = !showSidebar.value;
+}
+
+function closeSidebar() {
+  showSidebar.value = false;
+}
+
+// Toggle accordion tab
+function toggleAccordionTab(index: number) {
+  activeTab.value = activeTab.value === index ? -1 : index;
+}
+
+// Clear all selections
+function clearSelection() {
+  selectedControl.value = null;
+  selectedSection.value = null;
+  selectedColumn.value = null;
+  selectedRow.value = null;
+  selectedTab.value = null;
+  // Don't automatically close sidebar - let user decide
+}
+
+// Computed property for current tab sections (with getter and setter)
+const currentTabSections = computed({
+  get() {
+    return tabs.value[activeTab.value]?.sections || [];
+  },
+  set(newSections) {
+    if (tabs.value[activeTab.value]) {
+      tabs.value[activeTab.value].sections = newSections;
+    }
+  },
+});
+
+// Computed property to check if anything is selected
+const hasSelection = computed(() => {
+  return !!(selectedControl.value || selectedSection.value || selectedColumn.value || selectedRow.value || selectedTab.value !== null);
+});
+
+// Computed property to show what type of selection is active
+const selectionType = computed(() => {
+  if (selectedControl.value) return 'Field';
+  if (selectedSection.value) return 'Section';
+  if (selectedColumn.value) return 'Column';
+  if (selectedRow.value) return 'Row';
+  if (selectedTab.value !== null) return 'Tab';
+  return '';
+});
+
+// Field types
+const fieldTypes = [
+  { type: "text", label: "Text" },
+  { type: "textarea", label: "Text Area" },
+  { type: "number", label: "Number" },
+  { type: "email", label: "Email" },
+  { type: "phone", label: "Phone" },
+  { type: "url", label: "URL" },
+  { type: "password", label: "Password" },
+  { type: "select", label: "Select" },
+  { type: "radio", label: "Radio" },
+  { type: "checkbox", label: "Checkbox" },
+  { type: "date", label: "Date" },
+  { type: "datetime", label: "Date Time" },
+  { type: "time", label: "Time" },
+  { type: "file", label: "File Upload" },
+  { type: "image", label: "Image Upload" },
+  { type: "range", label: "Range/Slider" },
+  { type: "color", label: "Color Picker" },
+  { type: "link", label: "Link" },
+  { type: "hidden", label: "Read Only" },
+  { type: "divider", label: "Divider" },
+  { type: "html", label: "HTML Content" },
+];
+
+// Computed property for filtered field types
+const filteredFieldTypes = computed(() => {
+  if (!fieldSearchQuery.value) {
+    return fieldTypes;
+  }
+  
+  const query = fieldSearchQuery.value.toLowerCase();
+  return fieldTypes.filter(fieldType => 
     fieldType.label.toLowerCase().includes(query) || 
     fieldType.type.toLowerCase().includes(query) ||
     getFieldTypeDescription(fieldType.type).toLowerCase().includes(query)

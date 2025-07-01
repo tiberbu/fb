@@ -51,6 +51,7 @@
                   :is-read-only="isFieldReadOnly(field)"
                   :is-preview="true"
                   @update:model-value="$emit('update-field', field, $event)"
+                  @save-field="$emit('save-field', $event)"
                 />
               </div>
             </div>
@@ -76,7 +77,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-defineEmits(['update-field']);
+defineEmits(['update-field', 'save-field']);
 
 // Computed properties
 const visibleSections = computed(() => {
